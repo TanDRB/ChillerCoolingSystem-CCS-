@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Chiller Cooling System</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+
+    <script>
+        // Đọc trạng thái thu gọn sidebar đã lưu TRƯỚC khi trang vẽ, để tránh
+        // hiện sidebar rộng rồi giật thu gọn lại (flash of wrong state).
+        (function () {
+            try {
+                if (localStorage.getItem('ccsSidebarCollapsed') === '1') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <div class="app-shell">
+        @await Html.PartialAsync("_Sidebar")
+
+        <div class="app-main">
+            @await Html.PartialAsync("_Header")
+
+            <div class="app-content custom-scroll">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
