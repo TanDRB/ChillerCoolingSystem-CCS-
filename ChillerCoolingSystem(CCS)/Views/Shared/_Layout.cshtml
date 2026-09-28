@@ -9,15 +9,177 @@
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
 
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+
     <script>
-        // Đọc trạng thái thu gọn sidebar đã lưu TRƯỚC khi trang vẽ, để tránh
-        // hiện sidebar rộng rồi giật thu gọn lại (flash of wrong state).
+        // Nhãn tĩnh dùng attribute data-i18n; nhãn động (RUN/STOP/Normal...) tra qua ccsT().
         (function () {
-            try {
-                if (localStorage.getItem('ccsSidebarCollapsed') === '1') {
-                    document.documentElement.classList.add('sidebar-collapsed');
+            window.CCS_I18N = {
+                vi: {
+                    tempIn: 'Nhiệt độ vào',
+                    tempOut: 'Nhiệt độ ra',
+                    tempOutWater: 'Nhiệt độ nước ra',
+                    tempAmbi: 'Nhiệt độ môi trường',
+                    preWater: 'Áp lực nước',
+                    runStop: 'Run - Stop',
+                    fault: 'Fault',
+                    systemStatus: 'TRẠNG THÁI HỆ THỐNG',
+                    legendRunning: 'Hoạt động',
+                    legendStopped: 'Dừng',
+                    legendError: 'Lỗi',
+                    totalMachines: 'TỔNG SỐ MÁY',
+                    runningLabel: 'ĐANG HOẠT ĐỘNG',
+                    stoppedLabel: 'ĐANG DỪNG',
+                    errorLabel: 'ĐANG LỖI',
+                    systemOnline: 'System Online',
+                    lastUpdate: 'Last Update:',
+                    collapseBtn: 'Thu gọn',
+                    RUN: 'RUN',
+                    STOP: 'STOP',
+                    START: 'START',
+                    Normal: 'Bình thường',
+                    ovTotal: 'Tổng',
+                    trendTitle: 'Xu hướng nhiệt độ (Nước ra)',
+                    paramChartTitle: 'Biểu đồ thông số theo máy',
+                    selectParameter: 'Thông số',
+                    selectMachines: 'Máy',
+                    exportTitle: 'Truy xuất dữ liệu',
+                    exportExcel: 'Xuất Excel',
+                    exportFrom: 'Từ ngày',
+                    exportTo: 'Đến ngày',
+                    export24h: '24 giờ',
+                    export7d: '7 ngày',
+                    export30d: '30 ngày',
+                    alarmsTitle: 'Cảnh báo đang hoạt động',
+                    equipmentTitle: 'Danh sách thiết bị',
+                    colNo: 'STT',
+                    colName: 'Tên',
+                    colType: 'Loại',
+                    colLocation: 'Vị trí',
+                    colTempIn: 'Nhiệt độ vào (°C)',
+                    colTempOut: 'Nhiệt độ ra (°C)',
+                    colRunStop: 'Run/Stop',
+                    colFault: 'Lỗi',
+                    colStatus: 'Trạng thái',
+                    filterAllType: 'Tất cả loại',
+                    filterAllStatus: 'Tất cả trạng thái',
+                    searchPlaceholder: 'Tìm thiết bị...',
+                    clickHint: 'Bấm vào máy để xem chi tiết',
+                    noAlarms: 'Không có cảnh báo đang hoạt động',
+                    noEquipment: 'Không có thiết bị khớp bộ lọc',
+                    colTime: 'Thời gian',
+                    colEquipment: 'Thiết bị',
+                    colAlarmType: 'Loại cảnh báo',
+                    alarmActive: 'Đang hoạt động'
+                },
+                en: {
+                    tempIn: 'Inlet Temp',
+                    tempOut: 'Outlet Temp',
+                    tempOutWater: 'Water Outlet Temp',
+                    tempAmbi: 'Ambient Temp',
+                    preWater: 'Water Pressure',
+                    runStop: 'Run - Stop',
+                    fault: 'Fault',
+                    systemStatus: 'SYSTEM STATUS',
+                    legendRunning: 'Running',
+                    legendStopped: 'Stopped',
+                    legendError: 'Error',
+                    totalMachines: 'TOTAL MACHINES',
+                    runningLabel: 'RUNNING',
+                    stoppedLabel: 'STOPPED',
+                    errorLabel: 'ERROR',
+                    systemOnline: 'System Online',
+                    lastUpdate: 'Last Update:',
+                    collapseBtn: 'Collapse',
+                    RUN: 'RUN',
+                    STOP: 'STOP',
+                    START: 'START',
+                    Normal: 'Normal',
+                    ovTotal: 'Total',
+                    trendTitle: 'Temperature Trend (Leaving Water)',
+                    paramChartTitle: 'Parameter Trend by Machine',
+                    selectParameter: 'Parameter',
+                    selectMachines: 'Machines',
+                    exportTitle: 'Data Export',
+                    exportExcel: 'Export Excel',
+                    exportFrom: 'From',
+                    exportTo: 'To',
+                    export24h: '24 hours',
+                    export7d: '7 days',
+                    export30d: '30 days',
+                    alarmsTitle: 'Active Alarms',
+                    equipmentTitle: 'Equipment List',
+                    colNo: 'No.',
+                    colName: 'Name',
+                    colType: 'Type',
+                    colLocation: 'Location',
+                    colTempIn: 'Temp In (°C)',
+                    colTempOut: 'Temp Out (°C)',
+                    colRunStop: 'Run/Stop',
+                    colFault: 'Fault',
+                    colStatus: 'Status',
+                    filterAllType: 'All Type',
+                    filterAllStatus: 'All Status',
+                    searchPlaceholder: 'Search equipment...',
+                    clickHint: 'Click a machine to see details',
+                    noAlarms: 'No active alarms',
+                    noEquipment: 'No equipment matches the filter',
+                    colTime: 'Time',
+                    colEquipment: 'Equipment',
+                    colAlarmType: 'Alarm',
+                    alarmActive: 'ACTIVE'
                 }
-            } catch (e) { }
+            };
+
+            window.ccsLang = (function () {
+                try {
+                    return localStorage.getItem('ccsLang') || 'vi';
+                } catch (e) {
+                    return 'vi';
+                }
+            })();
+
+            window.ccsT = function (key) {
+                var dict = window.CCS_I18N[window.ccsLang] || window.CCS_I18N.vi;
+                return (key in dict) ? dict[key] : key;
+            };
+
+            window.ccsApplyStaticTranslations = function () {
+                document.querySelectorAll('[data-i18n]').forEach(function (el) {
+                    var text = window.ccsT(el.getAttribute('data-i18n'));
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = text;
+                    } else {
+                        el.textContent = text;
+                    }
+                });
+            };
+
+            window.ccsSetLang = function (lang) {
+                window.ccsLang = lang;
+
+                try {
+                    localStorage.setItem('ccsLang', lang);
+                } catch (e) { }
+
+                window.ccsApplyStaticTranslations();
+
+                if (window.ccsRefreshDynamicLabels) {
+                    window.ccsRefreshDynamicLabels();
+                }
+
+                document.querySelectorAll('.lang-btn').forEach(function (b) {
+                    b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+                });
+            };
+
+            document.addEventListener('DOMContentLoaded', function () {
+                window.ccsApplyStaticTranslations();
+
+                document.querySelectorAll('.lang-btn').forEach(function (b) {
+                    b.classList.toggle('active', b.getAttribute('data-lang') === window.ccsLang);
+                });
+            });
         })();
     </script>
 
@@ -25,8 +187,6 @@
 </head>
 <body>
     <div class="app-shell">
-        @await Html.PartialAsync("_Sidebar")
-
         <div class="app-main">
             @await Html.PartialAsync("_Header")
 

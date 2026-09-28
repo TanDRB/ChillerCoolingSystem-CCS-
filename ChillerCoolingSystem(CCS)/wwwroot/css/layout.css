@@ -1,5 +1,3 @@
-/* App shell: sidebar + main column (header, content) */
-
 .app-shell {
     width: 100%;
     height: 100vh;
@@ -7,117 +5,6 @@
     overflow: hidden;
 }
 
-/* Sidebar */
-.sidebar {
-    width: 200px;
-    flex: 0 0 200px;
-    height: 100%;
-    background: #0c1830;
-    color: #cbd5e1;
-    display: flex;
-    flex-direction: column;
-    padding: 18px 14px;
-    overflow: hidden;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-    margin-bottom: 14px;
-    flex: 0 0 auto;
-}
-
-.brand-logo {
-    font-weight: 900;
-    font-size: 20px;
-    color: #e63946;
-    letter-spacing: .02em;
-}
-
-.brand-name {
-    font-size: 10px;
-    color: #8ea0c2;
-    font-weight: 700;
-    letter-spacing: .05em;
-}
-
-.sidebar-toggle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    margin-top: 10px;
-    padding: 8px 12px;
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 8px;
-    background: transparent;
-    color: #a9b8d6;
-    font-size: 12px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    flex: 0 0 auto;
-}
-
-    .sidebar-toggle:hover {
-        background: rgba(255,255,255,.06);
-        color: #ffffff;
-    }
-
-    .sidebar-toggle svg {
-        flex: 0 0 auto;
-        transition: transform .15s ease;
-    }
-
-nav.nav-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-height: 0;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    color: #a9b8d6;
-    font-size: 13px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-    .nav-item svg {
-        flex: 0 0 auto;
-    }
-
-.nav-item.active {
-    background: #1c3f72;
-    color: #ffffff;
-}
-
-.sidebar-footer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255,255,255,.08);
-    flex: 0 0 auto;
-}
-
-.version {
-    font-size: 10px;
-    color: #8ea0c2;
-    line-height: 1.3;
-    font-weight: 600;
-}
-
-/* Main column */
 .app-main {
     flex: 1;
     min-width: 0;
@@ -165,14 +52,22 @@ nav.nav-list {
     min-width: 0;
 }
 
-/* Căn giữa tiêu đề trong thanh header (theo chiều rộng của .topbar, tức
-   phần bên phải sidebar) — chỉ áp dụng khi đủ rộng để không đè lên đồng
-   hồ/nút bên phải; dưới mốc này tiêu đề quay lại nằm bên trái như cũ. */
-@media (min-width: 901px) {
-    .topbar {
-        justify-content: flex-end;
+/* Không còn sidebar nên logo luôn hiện trong header (trước đây chỉ hiện khi fullscreen). */
+.topbar-logo {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+    .topbar-logo-img {
+        height: 26px;
+        width: auto;
+        display: block;
     }
 
+/* .topbar giữ justify-content:space-between (rule gốc) để logo bám trái,
+   đồng hồ bám phải — tiêu đề tự căn giữa nhờ position:absolute ở đây. */
+@media (min-width: 901px) {
     .topbar-title {
         position: absolute;
         left: 50%;
@@ -237,13 +132,14 @@ nav.nav-list {
     flex: 0 0 auto;
     border: 1px solid #e1e8f2;
     border-radius: 10px;
-    background: #f4f7fb;
+    background: #eef1f5;
     color: #16274d;
     cursor: pointer;
+    transition: background .15s ease;
 }
 
     .icon-btn:hover {
-        background: #e9eef7;
+        background: #e1e8f2;
     }
 
 .app-content {
@@ -275,80 +171,7 @@ nav.nav-list {
         background: #93aed4;
     }
 
-/* Thu gọn sidebar theo lựa chọn người dùng (nút bấm trong _Sidebar.cshtml,
-   trạng thái lưu localStorage) — hoạt động ở MỌI kích thước màn hình, độc
-   lập với breakpoint responsive bên dưới. */
-html.sidebar-collapsed .sidebar {
-    width: 64px;
-    flex-basis: 64px;
-    padding: 14px 8px;
-}
-
-html.sidebar-collapsed .brand {
-    justify-content: center;
-}
-
-html.sidebar-collapsed .brand-name,
-html.sidebar-collapsed .nav-label,
-html.sidebar-collapsed .version {
-    display: none;
-}
-
-html.sidebar-collapsed .nav-item {
-    justify-content: center;
-    padding: 10px 6px;
-}
-
-html.sidebar-collapsed .sidebar-toggle {
-    justify-content: center;
-    padding: 10px 6px;
-}
-
-    html.sidebar-collapsed .sidebar-toggle svg {
-        transform: rotate(180deg);
-    }
-
-/* Toàn màn hình (nút ở header): ẩn sidebar + header, chỉ còn thông số máy
-   — giống chế độ fullscreen của DRB-HMI-3D. */
-:fullscreen .sidebar,
-:-webkit-full-screen .sidebar,
-:fullscreen .topbar,
-:-webkit-full-screen .topbar {
-    display: none;
-}
-
-:fullscreen .app-content,
-:-webkit-full-screen .app-content {
-    padding: 16px 20px;
-}
-
 @media (max-width: 900px) {
-    .sidebar {
-        width: 64px;
-        flex-basis: 64px;
-        padding: 14px 8px;
-    }
-
-    .brand-name,
-    .nav-label,
-    .version {
-        display: none;
-    }
-
-    .brand {
-        justify-content: center;
-    }
-
-    .sidebar-toggle {
-        justify-content: center;
-        padding: 10px 6px;
-    }
-
-    .nav-item {
-        justify-content: center;
-        padding: 10px 6px;
-    }
-
     .topbar {
         padding: 0 14px;
     }

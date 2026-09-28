@@ -1,26 +1,45 @@
-/* Dashboard: Cooling Tower / Chiller cards + summary footer */
-
-/* row-ct và row-chiller được phép "nở" (flex-grow) để hấp thụ khoảng
-   trống dọc còn dư trong .app-content, thay vì để trống phía dưới
-   .statbar. align-content: stretch kéo giãn card cho khớp track cao hơn.
-   Khi nội dung đã tràn (màn hình thấp/hẹp, .app-content overflow:auto),
-   không có khoảng trống dư nên 2 quy tắc này tự nhiên không có tác dụng. */
-.row-ct {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    flex: 1 1 0;
-    min-height: 0;
-    align-content: stretch;
+@keyframes ccs-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .35; }
 }
 
-.row-chiller {
+.blink-alert {
+    animation: ccs-blink 1s ease-in-out infinite;
+}
+
+/* 2 khối xếp cạnh nhau (không xếp chồng dọc) để giữ tổng chiều cao trang gọn. */
+.plant-zones {
+    display: flex;
+    gap: 16px;
+    flex: 2.4 1 0;
+    min-height: 0;
+}
+
+.plant-zone {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+    .plant-zone .ct-card {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+.zone-chillers {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     flex: 1.4 1 0;
     min-height: 0;
     align-content: stretch;
+}
+
+.zone-chillers-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .card {
@@ -28,7 +47,6 @@
     background: #ffffff;
     border: 1px solid #e1e8f2;
     border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(16,27,52,.06);
 }
 
 .status-pill {
@@ -45,16 +63,16 @@
 }
 
 .status-run {
-    background: #1fae57;
+    background: #22c55e;
 }
 
 .status-stop {
-    background: #e5484d;
+    background: #ef4444;
 }
 
 .param-icon {
-    width: clamp(32px, 3.4vh, 42px);
-    height: clamp(32px, 3.4vh, 42px);
+    width: clamp(34px, 3.6vh, 46px);
+    height: clamp(34px, 3.6vh, 46px);
     border-radius: 9px;
     display: flex;
     align-items: center;
@@ -68,8 +86,8 @@
     }
 
 .param-icon.sm {
-    width: clamp(26px, 2.6vh, 34px);
-    height: clamp(26px, 2.6vh, 34px);
+    width: clamp(28px, 2.8vh, 38px);
+    height: clamp(28px, 2.8vh, 38px);
     border-radius: 7px;
 }
 
@@ -109,75 +127,61 @@
 }
 
 .param-label {
-    font-size: clamp(13px, 1.25vh, 16px);
-    color: #16274d;
+    font-size: clamp(12px, 1.3vh, 15px);
+    color: #475569;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.param-addr {
-    font-size: clamp(11px, 1vh, 13px);
-    color: #94a3b8;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .param-value {
-    min-width: 0;
+    flex: 0 0 auto;
     max-width: 100%;
-    font-size: clamp(16px, 1.75vh, 22px);
-    font-weight: 800;
-    color: #111827;
+    font-size: clamp(19px, 2.6vh, 32px);
+    font-weight: 900;
+    color: #16274d;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     margin-left: auto;
-    flex: 0 1 auto;
+    letter-spacing: -.01em;
 }
 
 .param-value.green {
-    color: #16a34a;
+    color: #22c55e;
 }
 
 .param-value.red {
-    color: #e11d2e;
+    color: #ef4444;
 }
 
-/* Cooling Tower card */
 .ct-card {
     padding: 18px;
     display: flex;
     gap: 20px;
 }
 
+/* Ảnh đã được key trong suốt qua photo-keying.js nên chỉ cần nền gradient trang trí. */
 .ct-photo {
     width: 200px;
     flex: 0 0 200px;
     height: clamp(130px, 20vh, 210px);
     align-self: center;
     border-radius: 10px;
-    background: linear-gradient(180deg,#eaf2fb,#dbe7f5);
+    background: radial-gradient(ellipse at 50% 40%, rgba(37,99,235,.08), rgba(255,255,255,0) 70%), #f4f7fc;
+    border: 1px solid #e1e8f2;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #7089ad;
-    gap: 8px;
-    border: 1.5px dashed #b9cbe6;
+    overflow: hidden;
 }
 
-    .ct-photo svg {
-        width: clamp(40px, 6vh, 64px);
-        height: clamp(40px, 6vh, 64px);
-    }
-
-    .ct-photo span {
-        font-size: clamp(11px, 1vh, 13px);
-        font-weight: 700;
+    .ct-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 10px rgba(15,23,42,.22));
     }
 
 .ct-body {
@@ -222,13 +226,29 @@
 }
 
 .param-row {
+    /* z-index tạo stacking context RIÊNG cho hàng này — nếu không, ::before
+       (dù âm z-index) vẫn đè lên icon/chữ tĩnh vì phần tử định vị (positioned)
+       luôn vẽ trên phần tử tĩnh (static) ở CÙNG stacking context với card. */
+    position: relative;
+    z-index: 0;
     display: flex;
     align-items: center;
     gap: 10px;
     min-width: 0;
 }
 
-/* Chiller card */
+/* Nền cảnh báo phủ cả hàng (không đẩy layout vì dùng absolute/inset),
+   z-index âm để nằm DƯỚI icon/chữ/số của chính hàng này. */
+.param-row.blink-alert::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -6px -10px;
+    background: #fde8e8;
+    border-radius: 10px;
+    pointer-events: none;
+}
+
 .chiller-card {
     min-width: 0;
     padding: 14px;
@@ -260,24 +280,25 @@
     margin-top: -6px;
 }
 
-/* Ảnh minh họa chỉ chiếm phần vừa đủ (chặn trên bằng clamp), phần thông
-   số (.chiller-params) mới là khối được "nở" để lấp khoảng trống còn lại
-   trong card — tránh ảnh phình to chiếm hết chỗ như trước. */
 .chiller-photo {
     flex: 0 0 auto;
     height: clamp(64px, 13vh, 130px);
+    aspect-ratio: 3 / 2;
+    align-self: center;
     border-radius: 10px;
-    background: linear-gradient(180deg,#eef3fb,#dfe9f6);
+    background: radial-gradient(ellipse at 50% 40%, rgba(37,99,235,.08), rgba(255,255,255,0) 70%), #f4f7fc;
+    border: 1px solid #e1e8f2;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #7089ad;
-    border: 1.5px dashed #b9cbe6;
+    overflow: hidden;
 }
 
-    .chiller-photo svg {
-        width: clamp(34px, 5vh, 52px);
-        height: clamp(34px, 5vh, 52px);
+    .chiller-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 8px 8px rgba(15,23,42,.2));
     }
 
 .chiller-params {
@@ -290,11 +311,10 @@
     margin-top: 2px;
 }
 
-/* Footer stat bar */
 .statbar {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr)) 1.3fr;
+    grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr)) 1.9fr;
     gap: 12px;
 }
 
@@ -307,7 +327,6 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    box-shadow: 0 2px 10px rgba(16,27,52,.06);
 }
 
 .stat-box > div {
@@ -380,17 +399,70 @@
     margin-top: 3px;
 }
 
-.sys-box .online-badge {
-    padding: 5px 10px;
-    font-size: 11.5px;
+/* Ô "System Online" cũ nay là hộp công cụ xuất Excel. */
+.sys-box {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
 }
 
-.sys-box .sub {
-    font-size: 11px;
-    color: #64748b;
-    font-weight: 700;
-    margin-top: 4px;
+.sys-export-dates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
+
+.sys-export-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.sys-export-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.sys-export-date {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #e1e8f2;
+    border-radius: 7px;
+    padding: 0 8px;
+    height: 32px;
+    font-size: 12px;
+    color: #16274d;
+    background: #ffffff;
+    font-family: inherit;
+    transition: border-color .15s ease;
+}
+
+    .sys-export-date:hover,
+    .sys-export-date:focus {
+        border-color: #93aed4;
+        outline: none;
+    }
+
+.sys-export-btn {
+    width: 100%;
+    background: #16a34a;
+    color: #ffffff;
+    border: none;
+    border-radius: 7px;
+    height: 34px;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+    .sys-export-btn:hover {
+        background: #128a3e;
+    }
 
 @media (max-height: 820px) {
     .app-content {
@@ -428,17 +500,14 @@
     }
 }
 
-/* Màn hình cỡ vừa (laptop nhỏ / tablet ngang): 5 cột Chiller quá chật làm
-   chữ bị ellipsis gần hết dù không tràn khung nữa. Giảm xuống 3 cột và thu
-   nhỏ ảnh Cooling Tower để nhường chỗ cho phần chữ. Từ đây cho phép cuộn
-   dọc bình thường thay vì ép vừa 1 màn hình như bản desktop rộng. */
+/* Dưới 1280px: 2 khối cạnh nhau quá chật nên xếp dọc lại. */
 @media (max-width: 1279px) {
     .app-content {
         overflow-y: auto;
     }
 
-    .row-chiller {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+    .plant-zones {
+        flex-direction: column;
     }
 
     .statbar {
@@ -456,19 +525,12 @@
     }
 }
 
-/* Chỉ đổi số cột ở màn hình rất hẹp (điện thoại/tablet dọc), nơi 5-6 cột
-   không thể co vừa dù đã bỏ chữ/ảnh thừa. Dưới các mốc này trang được phép
-   cuộn dọc bình thường (không ép vừa 1 màn hình như bản desktop). */
 @media (max-width: 900px) {
     .app-content {
         overflow-y: auto;
     }
 
-    .row-ct {
-        grid-template-columns: 1fr;
-    }
-
-    .row-chiller {
+    .zone-chillers-3 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -488,7 +550,8 @@
 }
 
 @media (max-width: 640px) {
-    .row-chiller {
+    .zone-chillers,
+    .zone-chillers-3 {
         grid-template-columns: 1fr;
     }
 

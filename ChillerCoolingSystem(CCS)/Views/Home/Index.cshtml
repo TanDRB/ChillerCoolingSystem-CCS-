@@ -1,273 +1,92 @@
+@using ChillerCoolingSystem_CCS_.Models.Dto
+@model List<DashboardZoneDto>
 @{
     ViewData["Title"] = "Chiller & Cooling System";
     ViewData["Subtitle"] = "MS Banbury - DRB 1";
+
+    // Id "{machineKey}-{camelParameterKey}" (vd "ct3-tempOut") — JS bên dưới build lại y hệt.
+    string Camel(string s) => string.IsNullOrEmpty(s) ? s : char.ToLowerInvariant(s[0]) + s[1..];
+    string ElementId(string machineKey, string parameterKey) => $"{machineKey}-{Camel(parameterKey)}";
+    bool IsToggleIcon(string kind) => kind == "Status" || kind == "Fault";
 }
 
-<!-- Cooling Tower row -->
-<div class="row-ct">
+<div class="plant-zones">
+    @foreach (var zone in Model)
+    {
+        <div class="plant-zone">
+            <div class="card ct-card">
+                <div class="ct-photo">
+                    <img src="@zone.Ct.ImageUrl" alt="@zone.Ct.Type" />
+                </div>
+                <div class="ct-body">
+                    <div class="ct-head">
+                        <div>
+                            <div class="ct-title">@zone.Ct.Name</div>
+                            <div class="ct-desc">@zone.Ct.Location</div>
+                        </div>
+                        <div class="status-pill status-run" id="@(zone.Ct.Key)-status-pill">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
+                            <span id="@(zone.Ct.Key)-status-text">START</span>
+                        </div>
+                    </div>
+                    <div class="ct-params">
+                        @foreach (var p in zone.Ct.Parameters.Where(p => p.Kind != "ErrorFlag"))
+                        {
+                            var valueId = ElementId(zone.Ct.Key, p.ParameterKey);
+                            var iconId = IsToggleIcon(p.Kind) ? $"{valueId}-icon" : null;
+                            var valueClass = IsToggleIcon(p.Kind) ? "green" : "";
+                            <div class="param-row">
+                                @await Html.PartialAsync("_ParamIcon", new ParamIconVm { IconKey = p.IconKey, Id = iconId, Compact = false })
+                                <div class="param-text"><div class="param-label" data-i18n="@p.LabelKey"></div></div>
+                                <div class="param-value @valueClass" id="@valueId">--</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
 
-    <div class="card ct-card">
-        <div class="ct-photo">
-            <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21V9l4-4 4 4v12" /><line x1="5" y1="21" x2="19" y2="21" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>
-            <span>Ảnh Cooling Tower</span>
-        </div>
-        <div class="ct-body">
-            <div class="ct-head">
-                <div>
-                    <div class="ct-title">CT #3</div>
-                    <div class="ct-desc">Banbury #1,2 , Openmill #1,2,7,8</div>
-                </div>
-                <div class="status-pill status-run">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
-                    RUNNING
-                </div>
-            </div>
-            <div class="ct-params">
-                <div class="param-row">
-                    <div class="param-icon ic-red"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                    <div class="param-text"><div class="param-label">Nhiệt độ vào</div><div class="param-addr">(D100)</div></div>
-                    <div class="param-value">148.9 °C</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-teal"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a8 8 0 1 1 16 0" /><line x1="12" y1="14" x2="15.5" y2="9.5" /><circle cx="12" cy="14" r="1.2" fill="currentColor" stroke="none" /></svg></div>
-                    <div class="param-text"><div class="param-label">Áp lực nước</div><div class="param-addr">(D112/D190)</div></div>
-                    <div class="param-value">0.0 Kgf/cm²</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-blue"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                    <div class="param-text"><div class="param-label">Nhiệt độ ra</div><div class="param-addr">(D102/D188)</div></div>
-                    <div class="param-value">149.2 °C</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-green"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" /></svg></div>
-                    <div class="param-text"><div class="param-label">Run - Stop</div><div class="param-addr">(D160)</div></div>
-                    <div class="param-value green">RUN</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-gray"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                    <div class="param-text"><div class="param-label">Nhiệt độ môi trường</div><div class="param-addr">(D110)</div></div>
-                    <div class="param-value">149.1 °C</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-green"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.2 2.2 4.8-5" /></svg></div>
-                    <div class="param-text"><div class="param-label">Fault</div><div class="param-addr">(D162)</div></div>
-                    <div class="param-value green">Normal</div>
-                </div>
+            <div class="@(zone.Chillers.Count >= 3 ? "zone-chillers zone-chillers-3" : "zone-chillers")">
+                @foreach (var chiller in zone.Chillers)
+                {
+                    <div class="card chiller-card">
+                        <div class="chiller-head">
+                            <div class="chiller-title">@chiller.Name</div>
+                            <div class="status-pill status-run" id="@(chiller.Key)-status-pill">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
+                                <span id="@(chiller.Key)-status-text">START</span>
+                            </div>
+                        </div>
+                        <div class="chiller-sub">@chiller.Location</div>
+                        <div class="chiller-photo">
+                            <img src="@chiller.ImageUrl" alt="@chiller.Type" />
+                        </div>
+                        <div class="chiller-params">
+                            @foreach (var p in chiller.Parameters.Where(p => p.Kind != "ErrorFlag"))
+                            {
+                                var valueId = ElementId(chiller.Key, p.ParameterKey);
+                                var iconId = IsToggleIcon(p.Kind) ? $"{valueId}-icon" : null;
+                                var valueClass = IsToggleIcon(p.Kind) ? "green" : "";
+                                <div class="param-row">
+                                    @await Html.PartialAsync("_ParamIcon", new ParamIconVm { IconKey = p.IconKey, Id = iconId, Compact = true })
+                                    <div class="param-text"><div class="param-label" data-i18n="@p.LabelKey"></div></div>
+                                    <div class="param-value @valueClass" id="@valueId">--</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         </div>
-    </div>
-
-    <div class="card ct-card">
-        <div class="ct-photo">
-            <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21V9l4-4 4 4v12" /><line x1="5" y1="21" x2="19" y2="21" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>
-            <span>Ảnh Cooling Tower</span>
-        </div>
-        <div class="ct-body">
-            <div class="ct-head">
-                <div>
-                    <div class="ct-title">CT #7</div>
-                    <div class="ct-desc">Banbury #3 , Openmill #10~12</div>
-                </div>
-                <div class="status-pill status-run">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
-                    RUNNING
-                </div>
-            </div>
-            <div class="ct-params">
-                <div class="param-row">
-                    <div class="param-icon ic-red"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                    <div class="param-text"><div class="param-label">Nhiệt độ vào</div><div class="param-addr">(D120)</div></div>
-                    <div class="param-value">150.0 °C</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-teal"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a8 8 0 1 1 16 0" /><line x1="12" y1="14" x2="15.5" y2="9.5" /><circle cx="12" cy="14" r="1.2" fill="currentColor" stroke="none" /></svg></div>
-                    <div class="param-text"><div class="param-label">Áp lực nước</div><div class="param-addr">(D132/D194)</div></div>
-                    <div class="param-value">0.0 Kgf/cm²</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-blue"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                    <div class="param-text"><div class="param-label">Nhiệt độ ra</div><div class="param-addr">(D122/D192)</div></div>
-                    <div class="param-value">151.5 °C</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-green"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" /></svg></div>
-                    <div class="param-text"><div class="param-label">Run - Stop</div><div class="param-addr">(D164)</div></div>
-                    <div class="param-value green">RUN</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-gray"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                    <div class="param-text"><div class="param-label">Nhiệt độ môi trường</div><div class="param-addr">(D130)</div></div>
-                    <div class="param-value">153.9 °C</div>
-                </div>
-                <div class="param-row">
-                    <div class="param-icon ic-green"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.2 2.2 4.8-5" /></svg></div>
-                    <div class="param-text"><div class="param-label">Fault</div><div class="param-addr">(D166)</div></div>
-                    <div class="param-value green">Normal</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    }
 </div>
 
-<!-- Chiller row -->
-<div class="row-chiller">
-
-    <div class="card chiller-card">
-        <div class="chiller-head">
-            <div class="chiller-title">Chiller #3</div>
-            <div class="status-pill status-run">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
-                RUNNING
-            </div>
-        </div>
-        <div class="chiller-sub">Banbury #2</div>
-        <div class="chiller-photo">
-            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="9" rx="1.5" /><circle cx="8" cy="12.5" r="2.3" /><circle cx="16" cy="12.5" r="2.3" /><line x1="2.5" y1="20.5" x2="21.5" y2="20.5" /></svg>
-        </div>
-        <div class="chiller-params">
-            <div class="param-row">
-                <div class="param-icon sm ic-red"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                <div class="param-text"><div class="param-label">Nhiệt độ nước ra</div><div class="param-addr">(D140/D196)</div></div>
-                <div class="param-value">151.6 °C</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" /></svg></div>
-                <div class="param-text"><div class="param-label">Run - Stop</div><div class="param-addr">(D168)</div></div>
-                <div class="param-value green">RUN</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.2 2.2 4.8-5" /></svg></div>
-                <div class="param-text"><div class="param-label">Fault</div><div class="param-addr">(D170)</div></div>
-                <div class="param-value green">Normal</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card chiller-card">
-        <div class="chiller-head">
-            <div class="chiller-title">Chiller #15</div>
-            <div class="status-pill status-run">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
-                RUNNING
-            </div>
-        </div>
-        <div class="chiller-sub">Banbury #1</div>
-        <div class="chiller-photo">
-            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="9" rx="1.5" /><circle cx="8" cy="12.5" r="2.3" /><circle cx="16" cy="12.5" r="2.3" /><line x1="2.5" y1="20.5" x2="21.5" y2="20.5" /></svg>
-        </div>
-        <div class="chiller-params">
-            <div class="param-row">
-                <div class="param-icon sm ic-red"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                <div class="param-text"><div class="param-label">Nhiệt độ nước ra</div><div class="param-addr">(D144/D198)</div></div>
-                <div class="param-value">152.0 °C</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" /></svg></div>
-                <div class="param-text"><div class="param-label">Run - Stop</div><div class="param-addr">(D172)</div></div>
-                <div class="param-value green">RUN</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.2 2.2 4.8-5" /></svg></div>
-                <div class="param-text"><div class="param-label">Fault</div><div class="param-addr">(D174)</div></div>
-                <div class="param-value green">Normal</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card chiller-card">
-        <div class="chiller-head">
-            <div class="chiller-title">Chiller #8</div>
-            <div class="status-pill status-run">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
-                RUNNING
-            </div>
-        </div>
-        <div class="chiller-sub">Banbury #3</div>
-        <div class="chiller-photo">
-            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="9" rx="1.5" /><circle cx="8" cy="12.5" r="2.3" /><circle cx="16" cy="12.5" r="2.3" /><line x1="2.5" y1="20.5" x2="21.5" y2="20.5" /></svg>
-        </div>
-        <div class="chiller-params">
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" /></svg></div>
-                <div class="param-text"><div class="param-label">Run - Stop</div><div class="param-addr">(D176)</div></div>
-                <div class="param-value green">RUN</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.2 2.2 4.8-5" /></svg></div>
-                <div class="param-text"><div class="param-label">Fault</div><div class="param-addr">(D178)</div></div>
-                <div class="param-value green">Normal</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card chiller-card">
-        <div class="chiller-head">
-            <div class="chiller-title">Chiller #9</div>
-            <div class="status-pill status-stop">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
-                STOP
-            </div>
-        </div>
-        <div class="chiller-sub">Banbury #3</div>
-        <div class="chiller-photo">
-            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="9" rx="1.5" /><circle cx="8" cy="12.5" r="2.3" /><circle cx="16" cy="12.5" r="2.3" /><line x1="2.5" y1="20.5" x2="21.5" y2="20.5" /></svg>
-        </div>
-        <div class="chiller-params">
-            <div class="param-row">
-                <div class="param-icon sm ic-red"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" /></svg></div>
-                <div class="param-text"><div class="param-label">Run - Stop</div><div class="param-addr">(D180)</div></div>
-                <div class="param-value red">STOP</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.2 2.2 4.8-5" /></svg></div>
-                <div class="param-text"><div class="param-label">Fault</div><div class="param-addr">(D182)</div></div>
-                <div class="param-value green">Normal</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card chiller-card">
-        <div class="chiller-head">
-            <div class="chiller-title">Chiller #10</div>
-            <div class="status-pill status-run">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg>
-                RUNNING
-            </div>
-        </div>
-        <div class="chiller-sub">Banbury #3</div>
-        <div class="chiller-photo">
-            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="9" rx="1.5" /><circle cx="8" cy="12.5" r="2.3" /><circle cx="16" cy="12.5" r="2.3" /><line x1="2.5" y1="20.5" x2="21.5" y2="20.5" /></svg>
-        </div>
-        <div class="chiller-params">
-            <div class="param-row">
-                <div class="param-icon sm ic-red"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.5V4a2 2 0 1 0-4 0v10.5a4 4 0 1 0 4 0Z" /><line x1="12" y1="9" x2="12" y2="13" /></svg></div>
-                <div class="param-text"><div class="param-label">Nhiệt độ nước ra</div><div class="param-addr">(D148/D200)</div></div>
-                <div class="param-value">158.9 °C</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" /></svg></div>
-                <div class="param-text"><div class="param-label">Run - Stop</div><div class="param-addr">(D184)</div></div>
-                <div class="param-value green">RUN</div>
-            </div>
-            <div class="param-row">
-                <div class="param-icon sm ic-green"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.2 2.2 4.8-5" /></svg></div>
-                <div class="param-text"><div class="param-label">Fault</div><div class="param-addr">(D186)</div></div>
-                <div class="param-value green">Normal</div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- Footer stat bar -->
 <div class="statbar">
 
     <div class="stat-box legend-box">
-        <div class="legend-title">TRẠNG THÁI HỆ THỐNG</div>
-        <div class="legend-row"><span class="legend-dot" style="background:#16a34a;"></span>Hoạt động<span class="legend-count">6</span></div>
-        <div class="legend-row"><span class="legend-dot" style="background:#e5484d;"></span>Dừng<span class="legend-count">1</span></div>
-        <div class="legend-row"><span class="legend-dot" style="background:#94a3b8;"></span>Lỗi<span class="legend-count">0</span></div>
+        <div class="legend-title" data-i18n="systemStatus">TRẠNG THÁI HỆ THỐNG</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#22c55e;"></span><span data-i18n="legendRunning">Hoạt động</span><span class="legend-count" id="legend-running">--</span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#ef4444;"></span><span data-i18n="legendStopped">Dừng</span><span class="legend-count" id="legend-stopped">--</span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#94a3b8;"></span><span data-i18n="legendError">Lỗi</span><span class="legend-count" id="legend-error">--</span></div>
     </div>
 
     <div class="stat-box">
@@ -275,8 +94,8 @@
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="1.5" /><line x1="8" y1="20" x2="16" y2="20" /><line x1="12" y1="16.5" x2="12" y2="20" /></svg>
         </div>
         <div>
-            <div class="stat-value">7</div>
-            <div class="stat-label">TỔNG SỐ MÁY</div>
+            <div class="stat-value" id="stat-total">--</div>
+            <div class="stat-label" data-i18n="totalMachines">TỔNG SỐ MÁY</div>
         </div>
     </div>
 
@@ -285,9 +104,9 @@
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" /></svg>
         </div>
         <div>
-            <div class="stat-value">6</div>
-            <div class="stat-label">ĐANG HOẠT ĐỘNG</div>
-            <div class="stat-sub" style="color:#16a34a;">85.7%</div>
+            <div class="stat-value" id="stat-running">--</div>
+            <div class="stat-label" data-i18n="runningLabel">ĐANG HOẠT ĐỘNG</div>
+            <div class="stat-sub" style="color:#22c55e;" id="stat-running-pct">--</div>
         </div>
     </div>
 
@@ -296,9 +115,9 @@
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" /></svg>
         </div>
         <div>
-            <div class="stat-value">1</div>
-            <div class="stat-label">ĐANG DỪNG</div>
-            <div class="stat-sub" style="color:#e5484d;">14.3%</div>
+            <div class="stat-value" id="stat-stopped">--</div>
+            <div class="stat-label" data-i18n="stoppedLabel">ĐANG DỪNG</div>
+            <div class="stat-sub" style="color:#ef4444;" id="stat-stopped-pct">--</div>
         </div>
     </div>
 
@@ -307,40 +126,320 @@
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 19H3L12 3.5Z" /><line x1="12" y1="9.5" x2="12" y2="13.5" /><circle cx="12" cy="16.3" r="0.9" fill="currentColor" stroke="none" /></svg>
         </div>
         <div>
-            <div class="stat-value">0</div>
-            <div class="stat-label">ĐANG LỖI</div>
-            <div class="stat-sub" style="color:#f59e0b;">0.0%</div>
+            <div class="stat-value" id="stat-error">--</div>
+            <div class="stat-label" data-i18n="errorLabel">ĐANG LỖI</div>
+            <div class="stat-sub" style="color:#f59e0b;" id="stat-error-pct">--</div>
         </div>
     </div>
 
     <div class="stat-box sys-box">
-        <div class="stat-icon ic-gray">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2" /><line x1="12" y1="2.5" x2="12" y2="5" /><line x1="12" y1="19" x2="12" y2="21.5" /><line x1="2.5" y1="12" x2="5" y2="12" /><line x1="19" y1="12" x2="21.5" y2="12" /><line x1="5.2" y1="5.2" x2="7" y2="7" /><line x1="17" y1="17" x2="18.8" y2="18.8" /><line x1="18.8" y1="5.2" x2="17" y2="7" /><line x1="7" y1="17" x2="5.2" y2="18.8" /></svg>
+        <div class="legend-title" data-i18n="exportTitle">Truy xuất dữ liệu</div>
+        <div class="sys-export-dates">
+            <div class="sys-export-field">
+                <label class="sys-export-label" for="exportFrom" data-i18n="exportFrom">Từ ngày</label>
+                <input type="date" id="exportFrom" class="sys-export-date" />
+            </div>
+            <div class="sys-export-field">
+                <label class="sys-export-label" for="exportTo" data-i18n="exportTo">Đến ngày</label>
+                <input type="date" id="exportTo" class="sys-export-date" />
+            </div>
         </div>
-        <div>
-            <div class="online-badge"><span class="online-dot"></span>System Online</div>
-            <div class="sub">Last Update: <span id="footerLastUpdate">--</span></div>
-        </div>
+        <button type="button" class="sys-export-btn" id="exportExcelBtn" data-i18n="exportExcel">Xuất Excel</button>
     </div>
 
 </div>
 
 @section Scripts {
+    <script src="~/js/photo-keying.js"></script>
+    <script>
+        window.ccsKeyWhiteBackground('.ct-photo img, .chiller-photo img');
+    </script>
     <script>
         (function () {
-            var pad = function (n) { return String(n).padStart(2, '0'); };
+            var exportBtn = document.getElementById('exportExcelBtn');
+            var fromInput = document.getElementById('exportFrom');
+            var toInput = document.getElementById('exportTo');
 
-            function tick() {
-                var d = new Date();
-                var el = document.getElementById('footerLastUpdate');
+            function toDateInputValue(d) {
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            }
+
+            if (fromInput && toInput) {
+                var today = new Date();
+                var weekAgo = new Date();
+                weekAgo.setDate(today.getDate() - 6);
+                fromInput.value = toDateInputValue(weekAgo);
+                toInput.value = toDateInputValue(today);
+                toInput.max = toDateInputValue(today);
+            }
+
+            if (exportBtn) {
+                var ALL_MACHINE_KEYS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.SelectMany(z => new[] { z.Ct }.Concat(z.Chillers)).Select(m => m.Key)));
+
+                exportBtn.addEventListener('click', function () {
+                    if (!fromInput.value || !toInput.value) {
+                        return;
+                    }
+
+                    var qs = 'fromDate=' + encodeURIComponent(fromInput.value) + '&toDate=' + encodeURIComponent(toInput.value) +
+                        ALL_MACHINE_KEYS.map(function (k) { return '&machineKeys=' + encodeURIComponent(k); }).join('');
+                    window.location.href = '/Home/ExportExcel?' + qs;
+                });
+            }
+        })();
+    </script>
+
+    <script>
+        (function () {
+            if (!window.signalR) {
+                console.warn('SignalR chưa load, bỏ qua realtime.');
+                return;
+            }
+
+            var MACHINES = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                Model.SelectMany(z => new[] { z.Ct }.Concat(z.Chillers))
+                    .Select(m => new
+                    {
+                        key = m.Key,
+                        parameters = m.Parameters.Select(p => new
+                        {
+                            parameterKey = p.ParameterKey,
+                            kind = p.Kind,
+                            unit = p.Unit,
+                            linkedParameterKey = p.LinkedParameterKey
+                        })
+                    })));
+
+            var MACHINE_KEYS = MACHINES.map(function (m) { return m.key; });
+
+            function camel(s) {
+                return s.length === 0 ? s : s[0].toLowerCase() + s.slice(1);
+            }
+
+            // errorTag (TempError1/2): khi lỗi thì tô đỏ + nháy cả hàng, không chỉ số.
+            function setTempCell(id, tag, errorTag) {
+                var el = document.getElementById(id);
+                if (!el || !tag) {
+                    return;
+                }
+
+                var isError = !!errorTag && errorTag.good && errorTag.value !== '0';
+
+                if (tag.good && tag.value !== null && tag.value !== undefined) {
+                    el.textContent = tag.value + ' °C';
+                } else {
+                    el.textContent = '--';
+                }
+
+                el.classList.toggle('red', !tag.good || isError);
+
+                var row = el.closest('.param-row');
+                (row || el).classList.toggle('blink-alert', isError);
+            }
+
+            function setIconTone(id, tone) {
+                var el = document.getElementById(id);
+                if (!el) {
+                    return;
+                }
+
+                el.classList.remove('ic-green', 'ic-red', 'ic-gray');
+                el.classList.add('ic-' + tone);
+            }
+
+            function setRunStopCell(prefix, tag) {
+                var el = document.getElementById(prefix + '-runStop');
+                var pill = document.getElementById(prefix + '-status-pill');
+                var pillText = document.getElementById(prefix + '-status-text');
+
+                if (!tag || !tag.good) {
+                    if (el) { el.textContent = '--'; el.classList.remove('green', 'red'); }
+                    setIconTone(prefix + '-runStop-icon', 'gray');
+                    return;
+                }
+
+                var isRun = tag.value === '1';
+                var t = window.ccsT || function (k) { return k; };
+
                 if (el) {
-                    el.textContent = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' +
-                        pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+                    el.textContent = isRun ? t('RUN') : t('STOP');
+                    el.classList.toggle('green', isRun);
+                    el.classList.toggle('red', !isRun);
+                }
+
+                setIconTone(prefix + '-runStop-icon', isRun ? 'green' : 'red');
+
+                if (pill) {
+                    pill.classList.toggle('status-run', isRun);
+                    pill.classList.toggle('status-stop', !isRun);
+                }
+
+                if (pillText) {
+                    pillText.textContent = isRun ? t('START') : t('STOP');
                 }
             }
 
-            tick();
-            setInterval(tick, 1000);
+            function setFaultCell(prefix, tag) {
+                var el = document.getElementById(prefix + '-fault');
+                if (!el) {
+                    return;
+                }
+
+                var row = el.closest('.param-row');
+
+                if (!tag || !tag.good) {
+                    el.textContent = '--';
+                    el.classList.remove('green', 'red');
+                    (row || el).classList.remove('blink-alert');
+                    setIconTone(prefix + '-fault-icon', 'gray');
+                    return;
+                }
+
+                var isNormal = tag.value === '0';
+                var t = window.ccsT || function (k) { return k; };
+                el.textContent = isNormal ? t('Normal') : (t('legendError') + ' (' + tag.value + ')');
+                el.classList.toggle('green', isNormal);
+                el.classList.toggle('red', !isNormal);
+                (row || el).classList.toggle('blink-alert', !isNormal);
+                setIconTone(prefix + '-fault-icon', isNormal ? 'green' : 'red');
+            }
+
+            function setRawCell(id, tag, errorTag, unit) {
+                var el = document.getElementById(id);
+                if (!el || !tag) {
+                    return;
+                }
+
+                var isError = !!errorTag && errorTag.good && errorTag.value !== '0';
+                var hasValue = tag.good && tag.value !== null && tag.value !== undefined;
+
+                el.textContent = hasValue ? (tag.value + (unit ? ' ' + unit : '')) : '--';
+                el.classList.toggle('red', !tag.good || isError);
+
+                var row = el.closest('.param-row');
+                (row || el).classList.toggle('blink-alert', isError);
+            }
+
+            var lastSnapshot = null;
+
+            window.ccsRefreshDynamicLabels = function () {
+                if (lastSnapshot) {
+                    applySnapshot(lastSnapshot);
+                }
+            };
+
+            function applySnapshot(snapshot) {
+                if (!snapshot) {
+                    return;
+                }
+
+                lastSnapshot = snapshot;
+
+                MACHINES.forEach(function (m) {
+                    m.parameters.forEach(function (p) {
+                        if (p.kind === 'ErrorFlag') {
+                            return; // không có hàng riêng — chỉ dùng để cảnh báo thông số khác.
+                        }
+
+                        var valueId = m.key + '-' + camel(p.parameterKey);
+                        var tag = snapshot[m.key + p.parameterKey];
+
+                        if (p.kind === 'Status') {
+                            setRunStopCell(m.key, tag);
+                            return;
+                        }
+
+                        if (p.kind === 'Fault') {
+                            setFaultCell(m.key, tag);
+                            return;
+                        }
+
+                        var errorParam = m.parameters.filter(function (x) {
+                            return x.kind === 'ErrorFlag' && x.linkedParameterKey === p.parameterKey;
+                        })[0];
+                        var errorTag = errorParam ? snapshot[m.key + errorParam.parameterKey] : null;
+
+                        if (p.kind === 'Temperature') {
+                            setTempCell(valueId, tag, errorTag);
+                        } else if (p.kind === 'Pressure') {
+                            setRawCell(valueId, tag, errorTag, p.unit);
+                        }
+                    });
+                });
+
+                updateSummary(snapshot);
+            }
+
+            function classifyMachine(snapshot, key) {
+                var runStop = snapshot[key + 'RunStop'];
+                var fault = snapshot[key + 'Fault'];
+
+                // Mất tag/quality Bad → coi là Lỗi, không đoán chạy/dừng (fail-safe).
+                if (!runStop || !runStop.good || !fault || !fault.good) {
+                    return 'error';
+                }
+
+                if (fault.value !== '0') {
+                    return 'error';
+                }
+
+                return runStop.value === '1' ? 'running' : 'stopped';
+            }
+
+            function formatPercent(count, total) {
+                if (total <= 0) {
+                    return '0.0%';
+                }
+
+                return (count / total * 100).toFixed(1) + '%';
+            }
+
+            function setText(id, text) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.textContent = text;
+                }
+            }
+
+            function updateSummary(snapshot) {
+                var running = 0, stopped = 0, error = 0;
+
+                MACHINE_KEYS.forEach(function (key) {
+                    var status = classifyMachine(snapshot, key);
+                    if (status === 'running') running++;
+                    else if (status === 'stopped') stopped++;
+                    else error++;
+                });
+
+                var total = MACHINE_KEYS.length;
+
+                setText('stat-total', String(total));
+
+                setText('legend-running', String(running));
+                setText('legend-stopped', String(stopped));
+                setText('legend-error', String(error));
+
+                setText('stat-running', String(running));
+                setText('stat-running-pct', formatPercent(running, total));
+
+                setText('stat-stopped', String(stopped));
+                setText('stat-stopped-pct', formatPercent(stopped, total));
+
+                setText('stat-error', String(error));
+                setText('stat-error-pct', formatPercent(error, total));
+            }
+
+            var connection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/chiller-realtime')
+                .withAutomaticReconnect([0, 1000, 3000, 5000])
+                .build();
+
+            connection.on('MachineUpdate', applySnapshot);
+
+            connection.start().catch(function (err) {
+                console.error('Kết nối SignalR (chiller-realtime) thất bại:', err);
+            });
         })();
     </script>
 }

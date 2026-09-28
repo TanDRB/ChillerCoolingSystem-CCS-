@@ -4,6 +4,9 @@
 }
 
 <header class="topbar">
+    <div class="topbar-logo">
+        <img class="topbar-logo-img" src="~/image/logo-drb-vietnam.png" alt="DRB Vietnam" />
+    </div>
     <div class="topbar-title">
         <div class="h1">@pageTitle</div>
         @if (!string.IsNullOrWhiteSpace(pageSubtitle))
@@ -46,7 +49,6 @@
         tick();
         setInterval(tick, 1000);
 
-        // Toàn màn hình: ẩn sidebar + header, chỉ còn thông số máy (giống DRB-HMI-3D)
         var fsBtn = document.getElementById('fullscreenBtn');
         var fsExpandIcon = document.getElementById('fsExpandIcon');
         var fsCompressIcon = document.getElementById('fsCompressIcon');

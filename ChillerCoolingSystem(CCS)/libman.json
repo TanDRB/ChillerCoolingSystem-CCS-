@@ -8,6 +8,20 @@
             "files": [
                 "dist/browser/signalr.min.js"
             ]
+        },
+        {
+            "library": "chart.js@4.4.4",
+            "destination": "wwwroot/lib/chart.js/",
+            "files": [
+                "chart.umd.js"
+            ]
+        },
+        {
+            "library": "three@0.169.0",
+            "destination": "wwwroot/lib/three/",
+            "files": [
+                "three.module.js"
+            ]
         }
     ]
 }
