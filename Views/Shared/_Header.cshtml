@@ -1,0 +1,73 @@
+@{
+    var pageTitle = ViewData["Title"] as string ?? "Chiller & Cooler System Overview";
+    var pageSubtitle = ViewData["Subtitle"] as string ?? "";
+}
+
+<header class="topbar">
+    <div class="topbar-logo">
+        <img class="topbar-logo-img" src="~/image/logo-drb-vietnam.png" alt="DRB Vietnam" />
+    </div>
+    <div class="topbar-title">
+        <div class="h1">@pageTitle</div>
+    </div>
+    <div class="topbar-right">
+        @if (!string.IsNullOrWhiteSpace(pageSubtitle))
+        {
+            <div class="h2 h2-right">@pageSubtitle</div>
+        }
+        <div class="datetime">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2" /><line x1="3.5" y1="9.5" x2="20.5" y2="9.5" /><line x1="8" y1="3" x2="8" y2="7" /><line x1="16" y1="3" x2="16" y2="7" /></svg>
+            <div>
+                <div class="date" id="headerDate">--</div>
+                <div class="time" id="headerTime">--:--:--</div>
+            </div>
+        </div>
+        <button type="button" class="icon-btn" id="fullscreenBtn" title="Toàn màn hình">
+            <svg id="fsExpandIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M8 21H5a2 2 0 0 1-2-2v-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
+            <svg id="fsCompressIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M9 3v3a2 2 0 0 1-2 2H4" /><path d="M15 3v3a2 2 0 0 0 2 2h3" /><path d="M9 21v-3a2 2 0 0 0-2-2H4" /><path d="M15 21v-3a2 2 0 0 1 2-2h3" /></svg>
+        </button>
+    </div>
+</header>
+
+<script>
+    (function () {
+        var dayNames = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
+        var pad = function (n) { return String(n).padStart(2, '0'); };
+
+        function tick() {
+            var d = new Date();
+            var dateEl = document.getElementById('headerDate');
+            var timeEl = document.getElementById('headerTime');
+            if (dateEl) {
+                dateEl.textContent = dayNames[d.getDay()] + ', ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+            }
+            if (timeEl) {
+                timeEl.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+            }
+        }
+
+        tick();
+        setInterval(tick, 1000);
+
+        var fsBtn = document.getElementById('fullscreenBtn');
+        var fsExpandIcon = document.getElementById('fsExpandIcon');
+        var fsCompressIcon = document.getElementById('fsCompressIcon');
+
+        if (fsBtn) {
+            fsBtn.addEventListener('click', function () {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(function () { });
+                } else {
+                    document.exitFullscreen().catch(function () { });
+                }
+            });
+
+            document.addEventListener('fullscreenchange', function () {
+                var isFs = !!document.fullscreenElement;
+                if (fsExpandIcon) fsExpandIcon.style.display = isFs ? 'none' : '';
+                if (fsCompressIcon) fsCompressIcon.style.display = isFs ? '' : 'none';
+                fsBtn.title = isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình';
+            });
+        }
+    })();
+</script>

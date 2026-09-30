@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Chiller Cooling System</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+
+    <script>
+        (function () {
+            window.CCS_I18N = {
+                vi: {
+                    tempIn: 'Nhiệt độ vào',
+                    tempOut: 'Nhiệt độ ra',
+                    tempOutWater: 'Nhiệt độ nước ra',
+                    tempAmbi: 'Nhiệt độ môi trường',
+                    preWater: 'Áp lực nước',
+                    runStop: 'Start - Stop',
+                    fault: 'Lỗi',
+                    systemStatus: 'TRẠNG THÁI HỆ THỐNG',
+                    legendRunning: 'Hoạt động',
+                    legendStopped: 'Dừng',
+                    legendError: 'Lỗi',
+                    totalMachines: 'TỔNG SỐ MÁY',
+                    runningLabel: 'ĐANG HOẠT ĐỘNG',
+                    stoppedLabel: 'ĐANG DỪNG',
+                    errorLabel: 'ĐANG LỖI',
+                    RUN: 'Start',
+                    STOP: 'Stop',
+                    START: 'Start',
+                    Normal: 'Bình thường',
+                    exportTitle: 'Truy xuất dữ liệu',
+                    exportExcel: 'Xuất Excel',
+                    exportFrom: 'Từ ngày',
+                    exportTo: 'Đến ngày'
+                },
+                en: {
+                    tempIn: 'Inlet Temp',
+                    tempOut: 'Outlet Temp',
+                    tempOutWater: 'Water Outlet Temp',
+                    tempAmbi: 'Ambient Temp',
+                    preWater: 'Water Pressure',
+                    runStop: 'Run - Stop',
+                    fault: 'Fault',
+                    systemStatus: 'SYSTEM STATUS',
+                    legendRunning: 'Running',
+                    legendStopped: 'Stopped',
+                    legendError: 'Error',
+                    totalMachines: 'TOTAL MACHINES',
+                    runningLabel: 'RUNNING',
+                    stoppedLabel: 'STOPPED',
+                    errorLabel: 'ERROR',
+                    RUN: 'RUN',
+                    STOP: 'STOP',
+                    START: 'START',
+                    Normal: 'Normal',
+                    exportTitle: 'Data Export',
+                    exportExcel: 'Export Excel',
+                    exportFrom: 'From',
+                    exportTo: 'To'
+                }
+            };
+
+            window.ccsLang = (function () {
+                try {
+                    return localStorage.getItem('ccsLang') || 'vi';
+                } catch (e) {
+                    return 'vi';
+                }
+            })();
+
+            window.ccsT = function (key) {
+                var dict = window.CCS_I18N[window.ccsLang] || window.CCS_I18N.vi;
+                return (key in dict) ? dict[key] : key;
+            };
+
+            window.ccsApplyStaticTranslations = function () {
+                document.querySelectorAll('[data-i18n]').forEach(function (el) {
+                    var text = window.ccsT(el.getAttribute('data-i18n'));
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = text;
+                    } else {
+                        el.textContent = text;
+                    }
+                });
+            };
+
+            window.ccsSetLang = function (lang) {
+                window.ccsLang = lang;
+
+                try {
+                    localStorage.setItem('ccsLang', lang);
+                } catch (e) { }
+
+                window.ccsApplyStaticTranslations();
+
+                if (window.ccsRefreshDynamicLabels) {
+                    window.ccsRefreshDynamicLabels();
+                }
+
+                document.querySelectorAll('.lang-btn').forEach(function (b) {
+                    b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+                });
+            };
+
+            document.addEventListener('DOMContentLoaded', function () {
+                window.ccsApplyStaticTranslations();
+
+                document.querySelectorAll('.lang-btn').forEach(function (b) {
+                    b.classList.toggle('active', b.getAttribute('data-lang') === window.ccsLang);
+                });
+            });
+
+            setTimeout(function () {
+                location.reload();
+            }, 6 * 60 * 60 * 1000);
+        })();
+    </script>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <div class="app-shell">
+        <div class="app-main">
+            @await Html.PartialAsync("_Header")
+
+            <div class="app-content custom-scroll">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
