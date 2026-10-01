@@ -115,8 +115,8 @@
 }
 
 .param-icon {
-    width: clamp(34px, 3.6vh, 46px);
-    height: clamp(34px, 3.6vh, 46px);
+    width: clamp(34px, 3.6vh, 38px);
+    height: clamp(34px, 3.6vh, 38px);
     border-radius: 9px;
     display: flex;
     align-items: center;
@@ -167,11 +167,11 @@
 
 .param-text {
     min-width: 40px;
-    flex: 1 1 auto;
+    flex: 0 1 186px;
 }
 
 .param-label {
-    font-size: clamp(12px, 1.3vh, 13px);
+    font-size: clamp(16px, 1.9vh, 18px);
     color: #475569;
     font-weight: 700;
     white-space: nowrap;
@@ -182,13 +182,13 @@
 .param-value {
     flex: 0 0 auto;
     max-width: 100%;
-    font-size: clamp(19px, 2.6vh, 32px);
+    font-size: clamp(21px, 1.3vw, 28px);
     font-weight: 900;
     color: #16274d;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-left: auto;
+    margin-left: 10px;
     letter-spacing: -.01em;
 }
 
@@ -253,7 +253,7 @@
     }
 
 .ct-title {
-    font-size: clamp(20px, 2vh, 26px);
+    font-size: clamp(22px, 2.2vh, 28px);
     font-weight: 900;
     color: #16274d;
     white-space: nowrap;
@@ -282,7 +282,7 @@
     position: relative;
     z-index: 0;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 4px 8px;
     min-width: 0;
@@ -373,11 +373,27 @@
 }
 
 .chiller-params .param-value {
-    font-size: clamp(15px, 2.1vh, 22px);
+    font-size: clamp(17px, 2.3vh, 24px);
 }
 
 .chiller-params .param-label {
-    font-size: clamp(13px, 1.5vh, 15px);
+    font-size: clamp(15px, 1.7vh, 17px);
+}
+
+.chiller-params .param-text {
+    flex-basis: 142px;
+}
+
+.zone-chillers-3 .chiller-params .param-value {
+    font-size: 19px;
+}
+
+.zone-chillers-3 .chiller-params .param-label {
+    font-size: 14px;
+}
+
+.zone-chillers-3 .chiller-params .param-text {
+    flex-basis: 115px;
 }
 
 .statbar {
@@ -646,6 +662,83 @@
     }
 }
 
+@media (max-width: 1700px) {
+    .ct-content {
+        gap: 10px;
+    }
+
+    .ct-params {
+        gap: 10px 14px;
+    }
+
+    .ct-params .param-row {
+        gap: 4px 5px;
+    }
+
+    .ct-params .param-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .ct-params .param-text {
+        flex-basis: 100px;
+        flex-shrink: 1;
+    }
+
+    .ct-params .param-label {
+        font-size: 10px;
+    }
+
+    .ct-params .param-value {
+        min-width: 0;
+        flex-shrink: 1;
+        font-size: 11px;
+        margin-left: 5px;
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-row {
+        gap: 4px 5px;
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-text {
+        flex-basis: 72px;
+        flex-shrink: 1;
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-label {
+        font-size: 9px;
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-value {
+        min-width: 0;
+        flex-shrink: 1;
+        font-size: 8px;
+        margin-left: 5px;
+    }
+}
+
+@media (max-width: 1700px) {
+    .zone-chillers-3 .chiller-params .param-row {
+        gap: 4px 5px;
+    }
+
+    .zone-chillers-3 .chiller-params .param-text {
+        flex-basis: 72px;
+        flex-shrink: 1;
+    }
+
+    .zone-chillers-3 .chiller-params .param-label {
+        font-size: 9px;
+    }
+
+    .zone-chillers-3 .chiller-params .param-value {
+        min-width: 0;
+        flex-shrink: 1;
+        font-size: 8px;
+        margin-left: 5px;
+    }
+}
+
 @media (max-height: 1000px) {
     .app-content {
         padding: 6px 12px;
@@ -736,15 +829,6 @@
         margin-top: 0;
     }
 
-    .chiller-params .param-label {
-        
-        font-size: 11px;
-    }
-
-    .chiller-params .param-value {
-        font-size: 11px;
-    }
-
     .param-text {
         min-width: 32px;
     }
@@ -801,6 +885,14 @@
 }
 
 @media (max-width: 1279px) {
+    .param-text {
+        flex-basis: auto;
+    }
+
+    .chiller-params .param-value {
+        font-size: 8px;
+    }
+
     .ct-photo {
         display: none;
     }
@@ -869,6 +961,18 @@
 }
 
 @media (max-width: 900px) {
+    .ct-params .param-label {
+        font-size: 8px;
+    }
+
+    .ct-params .param-value {
+        font-size: 10px;
+    }
+
+    .ct-params .param-text {
+        flex-basis: 80px;
+    }
+
     .app-content {
         padding: 6px 10px;
         gap: 6px;
@@ -906,14 +1010,6 @@
         gap: 3px;
         padding: 3px 5px;
         margin-top: 0;
-    }
-
-    .chiller-params .param-value {
-        font-size: 11px;
-    }
-
-    .chiller-params .param-label {
-        font-size: 11px;
     }
 
     .param-text {
