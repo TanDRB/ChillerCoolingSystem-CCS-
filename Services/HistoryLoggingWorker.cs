@@ -91,6 +91,9 @@ namespace ChillerCoolingSystem_CCS_.Services
                 var match = TagKeyRegex().Match(key);
                 if (!match.Success)
                 {
+                    _logger.LogWarning(
+                        "HistoryLoggingWorker: key '{Key}' không khớp dạng machineKey+TagName (vd 'ct3TempOut'), bỏ qua ghi lịch sử",
+                        key);
                     continue;
                 }
 

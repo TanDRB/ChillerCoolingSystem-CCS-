@@ -13,6 +13,8 @@ namespace ChillerCoolingSystem_CCS_.Data
         public DbSet<AlarmEvent> AlarmEvents => Set<AlarmEvent>();
         public DbSet<Machine> Machines => Set<Machine>();
         public DbSet<MachineParameter> MachineParameters => Set<MachineParameter>();
+        public DbSet<Plant> Plants => Set<Plant>();
+        public DbSet<WeighingRecord> WeighingRecords => Set<WeighingRecord>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +32,18 @@ namespace ChillerCoolingSystem_CCS_.Data
                 .HasOne(p => p.Machine)
                 .WithMany(m => m.Parameters)
                 .HasForeignKey(p => p.MachineId);
+
+            modelBuilder.Entity<Plant>()
+                .HasIndex(p => p.Key)
+                .IsUnique();
+
+            modelBuilder.Entity<WeighingRecord>()
+                .HasIndex(w => new { w.StationKey, w.RecordedAtUtc });
+
+            modelBuilder.Entity<Machine>()
+                .HasOne(m => m.Plant)
+                .WithMany()
+                .HasForeignKey(m => m.PlantId);
         }
     }
 }

@@ -1,0 +1,65 @@
+@using ChillerCoolingSystem_CCS_.Monitoring
+@model List<ChillerCoolingSystem_CCS_.Models.Dto.DashboardZoneDto>
+@inject IWeighingService Weighing
+@{
+    var requestedKey = Context.Request.RouteValues["id"]?.ToString() ?? Context.Request.Query["id"].ToString();
+    var plantKey = ViewData["CurrentPlantKey"] as string;
+    var station = (string.IsNullOrWhiteSpace(requestedKey) ? null : Weighing.FindStation(requestedKey))
+                  ?? Weighing.GetStations().FirstOrDefault(s => s.PlantKey == plantKey)
+                  ?? Weighing.GetStations().FirstOrDefault();
+    string[] labels = { "N1", "N2", "N3" };
+}
+
+@if (station is null)
+{
+    <div class="ext-card ext-empty">Chưa cấu hình trạm cân nào (mục "Monitoring:WeightStations" trong appsettings.json).</div>
+}
+else
+{
+    <div id="weightPage" data-key="@station.Key">
+
+        <div id="wtConn" class="ext-conn d-none" role="alert"></div>
+
+        <section class="ext-card ext-top wt-top">
+            <div class="ext-name">
+                <div class="ext-label">@station.Name @station.Number</div>
+                <div class="ext-model"><span>@station.Model</span></div>
+            </div>
+            <div class="live-pill wt-live" id="wtLive" data-live="false">
+                <span class="live-dot"></span><span id="wtLiveText">Đang kết nối</span>
+            </div>
+        </section>
+
+        <section class="ext-card wt-wrap">
+            <div class="wt-grid" aria-label="Trọng lượng và chiều dài @station.DisplayName">
+                <div class="wt-cell wt-title" style="grid-area: 1 / 1 / 4 / 2;">
+                    <div class="wt-title-text">TRỌNG LƯỢNG</div>
+                    <svg class="wt-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.2 8.5A4.8 4.8 0 0 1 12 3a4.8 4.8 0 0 1 4.8 5.5h1.3a1.9 1.9 0 0 1 1.85 1.5l1.6 9a1.9 1.9 0 0 1-1.87 2.2H4.3a1.9 1.9 0 0 1-1.87-2.2l1.6-9a1.9 1.9 0 0 1 1.87-1.5zM12 5.2a2.6 2.6 0 0 0-2.55 3.3h5.1A2.6 2.6 0 0 0 12 5.2z" /></svg>
+                    <div class="wt-sub">(KG)</div>
+                </div>
+
+                @for (var i = 0; i < 3; i++)
+                {
+                    <div class="wt-cell wt-n" style="grid-area: @(i + 1) / 2;">@labels[i]</div>
+                    <div class="wt-cell wt-value" id="wtN@(i + 1)" style="grid-area: @(i + 1) / 3;" title="">--</div>
+                    <div class="wt-cell wt-unit" style="grid-area: @(i + 1) / 4;">KG</div>
+                }
+
+                <div class="wt-cell wt-len-title" style="grid-area: 4 / 1 / 5 / 3;">
+                    <svg class="wt-ico wt-ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17.5 17.5 3l3.5 3.5L6.5 21z" /><path d="M7.5 13.5l2 2M10.5 10.5l2 2M13.5 7.5l2 2" /></svg>
+                    <div>
+                        <div class="wt-title-text wt-title-sm">CHIỀU DÀI THỰC TẾ</div>
+                        <div class="wt-sub">(MM)</div>
+                    </div>
+                </div>
+                <div class="wt-cell wt-value" id="wtLen" style="grid-area: 4 / 3;">--</div>
+                <div class="wt-cell wt-unit" style="grid-area: 4 / 4;">MM</div>
+            </div>
+
+            <div class="ext-foot">
+                <span class="ext-muted">N1: lần cân mới nhất · N2, N3: hai lần cân liền trước</span>
+                <span class="ext-muted">Cập nhật lúc <strong id="wtReadAt">--:--:--</strong></span>
+            </div>
+        </section>
+    </div>
+}

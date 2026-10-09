@@ -23,5 +23,17 @@ namespace ChillerCoolingSystem_CCS_.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<List<Machine>> GetAllWithParametersAsync(int plantId)
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+
+            return await db.Machines
+                .Where(m => m.PlantId == plantId)
+                .Include(m => m.Parameters.OrderBy(p => p.SortOrder))
+                .OrderBy(m => m.SortOrder)
+                .AsNoTracking()
+                .ToListAsync();
+        }
     }
 }

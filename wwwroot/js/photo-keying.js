@@ -1,7 +1,3 @@
-// Ảnh sản phẩm (CoolingTower.png/Chiller.png) có nền trắng đặc, không có kênh
-// alpha — hàm này "key" nền trắng thành trong suốt bằng canvas 2D (cùng kỹ
-// thuật đã dùng cho billboard scene 3D ở overview-scene.js) rồi gán lại
-// img.src, để khung ảnh trong theme tối không còn mảng trắng vuông chọi màu.
 (function () {
     function keyImage(img) {
         var canvas = document.createElement('canvas');

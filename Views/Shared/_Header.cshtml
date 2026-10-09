@@ -1,6 +1,9 @@
+@using ChillerCoolingSystem_CCS_.Models.Entities
 @{
     var pageTitle = ViewData["Title"] as string ?? "Chiller & Cooler System Overview";
     var pageSubtitle = ViewData["Subtitle"] as string ?? "";
+    var plants = ViewData["Plants"] as List<Plant>;
+    var currentPlantKey = ViewData["CurrentPlantKey"] as string ?? "";
 }
 
 <header class="topbar">
@@ -11,17 +14,33 @@
         <div class="h1">@pageTitle</div>
     </div>
     <div class="topbar-right">
-        @if (!string.IsNullOrWhiteSpace(pageSubtitle))
+        @if (plants != null && plants.Count > 1)
+        {
+            var currentPlant = plants.FirstOrDefault(p => p.Key == currentPlantKey) ?? plants[0];
+            <div class="plant-dd" id="plantDd">
+                <button type="button" class="plant-dd-btn" id="plantDdBtn" aria-haspopup="listbox" aria-expanded="false" title="Chọn xưởng">
+                    <svg class="plant-dd-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l6 4V9l6 4V5h3a3 3 0 0 1 3 3v13z" /></svg>
+                    <span class="plant-dd-name">@currentPlant.Name</span>
+                    <svg class="plant-dd-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                </button>
+                <ul class="plant-dd-list" id="plantDdList" role="listbox" hidden>
+                    @foreach (var p in plants)
+                    {
+                        var selected = p.Key == currentPlant.Key;
+                        <li role="option" aria-selected="@(selected ? "true" : "false")">
+                            <a class="plant-dd-item@(selected ? " is-selected" : "")" href="?plant=@Uri.EscapeDataString(p.Key)">
+                                <span>@p.Name</span>
+                                <svg class="plant-dd-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(pageSubtitle))
         {
             <div class="h2 h2-right">@pageSubtitle</div>
         }
-        <div class="datetime">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2" /><line x1="3.5" y1="9.5" x2="20.5" y2="9.5" /><line x1="8" y1="3" x2="8" y2="7" /><line x1="16" y1="3" x2="16" y2="7" /></svg>
-            <div>
-                <div class="date" id="headerDate">--</div>
-                <div class="time" id="headerTime">--:--:--</div>
-            </div>
-        </div>
         <button type="button" class="icon-btn" id="fullscreenBtn" title="Toàn màn hình">
             <svg id="fsExpandIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M8 21H5a2 2 0 0 1-2-2v-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
             <svg id="fsCompressIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M9 3v3a2 2 0 0 1-2 2H4" /><path d="M15 3v3a2 2 0 0 0 2 2h3" /><path d="M9 21v-3a2 2 0 0 0-2-2H4" /><path d="M15 21v-3a2 2 0 0 1 2-2h3" /></svg>
@@ -31,33 +50,40 @@
 
 <script>
     (function () {
-        var dayNames = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
-        var pad = function (n) { return String(n).padStart(2, '0'); };
-
-        function tick() {
-            var d = new Date();
-            var dateEl = document.getElementById('headerDate');
-            var timeEl = document.getElementById('headerTime');
-            if (dateEl) {
-                dateEl.textContent = dayNames[d.getDay()] + ', ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
-            }
-            if (timeEl) {
-                timeEl.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-            }
+        var ddBtn = document.getElementById('plantDdBtn');
+        var ddList = document.getElementById('plantDdList');
+        if (ddBtn && ddList) {
+            var setOpen = function (open) {
+                ddList.hidden = !open;
+                ddBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            };
+            ddBtn.addEventListener('click', function (e) { e.stopPropagation(); setOpen(ddList.hidden); });
+            document.addEventListener('click', function (e) { if (!ddList.contains(e.target)) setOpen(false); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !ddList.hidden) { setOpen(false); ddBtn.focus(); }
+            });
         }
-
-        tick();
-        setInterval(tick, 1000);
 
         var fsBtn = document.getElementById('fullscreenBtn');
         var fsExpandIcon = document.getElementById('fsExpandIcon');
         var fsCompressIcon = document.getElementById('fsCompressIcon');
 
         if (fsBtn) {
+            // Trình duyệt tự thoát toàn màn hình mỗi khi tải trang khác (vd. đổi xưởng), nên ghi nhớ
+            // ý muốn "đang ở toàn màn hình" để trang mới vào lại (xem restoreFullscreen bên dưới).
+            var FS_KEY = 'ccsWantFullscreen';
+            var unloading = false;
+            var remember = function (on) {
+                try { if (on) localStorage.setItem(FS_KEY, '1'); else localStorage.removeItem(FS_KEY); } catch (e) { }
+            };
+            window.addEventListener('beforeunload', function () { unloading = true; });
+            window.addEventListener('pagehide', function () { unloading = true; });
+
             fsBtn.addEventListener('click', function () {
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(function () { });
                 } else {
+                    remember(false);
                     document.exitFullscreen().catch(function () { });
                 }
             });
@@ -67,7 +93,37 @@
                 if (fsExpandIcon) fsExpandIcon.style.display = isFs ? 'none' : '';
                 if (fsCompressIcon) fsCompressIcon.style.display = isFs ? '' : 'none';
                 fsBtn.title = isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình';
+                if (isFs) remember(true);
+                else if (!unloading) remember(false); // người dùng tự thoát (Esc...) chứ không phải do chuyển trang
             });
+
+            function restoreFullscreen() {
+                var want = false;
+                try { want = localStorage.getItem(FS_KEY) === '1'; } catch (e) { }
+                if (!want || document.fullscreenElement) return;
+
+                var hint = null;
+                var cleanup = function () {
+                    ['pointerdown', 'keydown', 'touchstart'].forEach(function (t) { document.removeEventListener(t, onGesture, true); });
+                    if (hint) { hint.remove(); hint = null; }
+                };
+                var onGesture = function () {
+                    cleanup();
+                    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(function () { });
+                };
+
+                // Thử vào lại ngay (chạy được nếu trình duyệt còn coi là thao tác của người dùng)
+                document.documentElement.requestFullscreen().catch(function () {
+                    // Bị chặn: chờ lần bấm/chạm đầu tiên rồi vào lại, kèm gợi ý nhỏ
+                    ['pointerdown', 'keydown', 'touchstart'].forEach(function (t) { document.addEventListener(t, onGesture, true); });
+                    hint = document.createElement('div');
+                    hint.className = 'fs-restore-hint';
+                    hint.textContent = 'Chạm vào màn hình để trở lại toàn màn hình';
+                    document.body.appendChild(hint);
+                    setTimeout(function () { if (hint) { hint.remove(); hint = null; } }, 8000);
+                });
+            }
+            restoreFullscreen();
         }
     })();
 </script>

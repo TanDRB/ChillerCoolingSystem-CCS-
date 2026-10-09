@@ -1,0 +1,78 @@
+/* Trang cân Extruder (N1/N2/N3 + chiều dài). Dùng chung thẻ/nút từ extruder.css. */
+
+#weightPage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#weightPage .ext-top { flex: none; }
+
+.wt-top { grid-template-columns: minmax(0, 1fr) auto; }
+.wt-top .ext-name { border-right: 0; }
+.wt-live { font-size: clamp(13px, 2.2vh, 28px); }
+.wt-live .live-dot { width: clamp(10px, 1.8vh, 22px); height: clamp(10px, 1.8vh, 22px); }
+
+.wt-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: clamp(8px, 1.6vh, 18px); }
+
+.wt-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 29% 18% 33% 20%;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  border: 1px solid #cfdcf0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.wt-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border-right: 1px solid #d9e3f2;
+  border-bottom: 1px solid #d9e3f2;
+  color: #17264a;
+}
+/* Ô ở cột cuối / hàng cuối không cần viền (đã có viền ngoài) */
+.wt-unit { border-right: 0; }
+.wt-grid > .wt-cell:nth-last-child(-n+3) { border-bottom: 0; }
+
+.wt-title {
+  flex-direction: column;
+  gap: clamp(4px, 1.2vh, 14px);
+  background: #f6f9fe;
+}
+.wt-title-text { font-weight: 800; font-size: clamp(15px, 3vh, 44px); letter-spacing: .01em; text-align: center; }
+.wt-title-sm { font-size: clamp(14px, 2.6vh, 38px); text-align: left; }
+.wt-sub { font-size: clamp(11px, 1.9vh, 26px); color: #6b7a93; font-weight: 600; }
+.wt-ico { width: clamp(28px, 6vh, 80px); height: clamp(28px, 6vh, 80px); color: #5f6f94; flex: none; }
+.wt-ico-sm { width: clamp(26px, 5.4vh, 72px); height: clamp(26px, 5.4vh, 72px); }
+
+.wt-n {
+  background: #e9f2fd;
+  font-weight: 800;
+  font-size: clamp(16px, 3.2vh, 48px);
+}
+
+.wt-value {
+  font-weight: 800;
+  font-size: clamp(26px, 6.4vh, 96px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.wt-unit {
+  color: #6b7a93;
+  font-weight: 600;
+  font-size: clamp(14px, 2.8vh, 40px);
+  background: #fafcff;
+}
+
+.wt-len-title {
+  justify-content: flex-start;
+  gap: clamp(12px, 1.6vw, 28px);
+  padding-left: clamp(14px, 3vw, 48px);
+  background: #f6f9fe;
+}
+
+@media (max-width: 700px) {
+  .wt-grid { grid-template-columns: 26% 16% 36% 22%; }
+}
