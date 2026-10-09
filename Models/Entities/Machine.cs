@@ -3,6 +3,8 @@ namespace ChillerCoolingSystem_CCS_.Models.Entities
     public class Machine
     {
         public int Id { get; set; }
+        public int PlantId { get; set; }
+        public Plant Plant { get; set; } = null!;
         public string Key { get; set; } = "";
         public string Name { get; set; } = "";
         public string Type { get; set; } = "";

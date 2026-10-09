@@ -4,6 +4,7 @@ using ChillerCoolingSystem_CCS_.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ChillerCoolingSystem_CCS_.Migrations
 {
     [DbContext(typeof(HistoryDbContext))]
-    partial class HistoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005084535_AddExtruder1OutPlant")]
+    partial class AddExtruder1OutPlant
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,7 +47,7 @@ namespace ChillerCoolingSystem_CCS_.Migrations
 
                     b.HasIndex("MachineKey", "StartUtc");
 
-                    b.ToTable("AlarmEvents", (string)null);
+                    b.ToTable("AlarmEvents");
                 });
 
             modelBuilder.Entity("ChillerCoolingSystem_CCS_.Models.Entities.Machine", b =>
@@ -95,7 +98,7 @@ namespace ChillerCoolingSystem_CCS_.Migrations
 
                     b.HasIndex("PlantId");
 
-                    b.ToTable("Machines", (string)null);
+                    b.ToTable("Machines");
                 });
 
             modelBuilder.Entity("ChillerCoolingSystem_CCS_.Models.Entities.MachineParameter", b =>
@@ -138,7 +141,7 @@ namespace ChillerCoolingSystem_CCS_.Migrations
 
                     b.HasIndex("MachineId");
 
-                    b.ToTable("MachineParameters", (string)null);
+                    b.ToTable("MachineParameters");
                 });
 
             modelBuilder.Entity("ChillerCoolingSystem_CCS_.Models.Entities.Plant", b =>
@@ -175,7 +178,7 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("Plants", (string)null);
+                    b.ToTable("Plants");
                 });
 
             modelBuilder.Entity("ChillerCoolingSystem_CCS_.Models.Entities.TagHistoryEntry", b =>
@@ -207,7 +210,7 @@ namespace ChillerCoolingSystem_CCS_.Migrations
 
                     b.HasIndex("MachineKey", "TimestampUtc");
 
-                    b.ToTable("TagHistoryEntries", (string)null);
+                    b.ToTable("TagHistoryEntries");
                 });
 
             modelBuilder.Entity("ChillerCoolingSystem_CCS_.Models.Entities.WeighingRecord", b =>
@@ -232,7 +235,7 @@ namespace ChillerCoolingSystem_CCS_.Migrations
 
                     b.HasIndex("StationKey", "RecordedAtUtc");
 
-                    b.ToTable("WeighingRecords", (string)null);
+                    b.ToTable("WeighingRecords");
                 });
 
             modelBuilder.Entity("ChillerCoolingSystem_CCS_.Models.Entities.Machine", b =>

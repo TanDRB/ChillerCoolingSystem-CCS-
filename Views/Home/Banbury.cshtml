@@ -1,9 +1,6 @@
 @using ChillerCoolingSystem_CCS_.Models.Dto
 @model List<DashboardZoneDto>
 @{
-    ViewData["Title"] = "Chiller & Cooler System Overview";
-    ViewData["Subtitle"] = "MS Banbury - DRB 1";
-
     string Camel(string s) => string.IsNullOrEmpty(s) ? s : char.ToLowerInvariant(s[0]) + s[1..];
     string ElementId(string machineKey, string parameterKey) => $"{machineKey}-{Camel(parameterKey)}";
     bool IsToggleIcon(string kind) => kind == "Status" || kind == "Fault";
@@ -158,6 +155,23 @@
 </div>
 
 @section Scripts {
+    @{
+        // Dữ liệu cho script bên dưới đi qua thuộc tính data-* (thay vì nhúng Razor trong JS) để trình soạn thảo không báo lỗi cú pháp JS.
+        var allMachines = Model.SelectMany(z => new[] { z.Ct }.Concat(z.Chillers)).ToList();
+        var machineKeysJson = System.Text.Json.JsonSerializer.Serialize(allMachines.Select(m => m.Key));
+        var machinesJson = System.Text.Json.JsonSerializer.Serialize(allMachines.Select(m => new
+        {
+            key = m.Key,
+            parameters = m.Parameters.Select(p => new
+            {
+                parameterKey = p.ParameterKey,
+                kind = p.Kind,
+                unit = p.Unit,
+                linkedParameterKey = p.LinkedParameterKey
+            })
+        }));
+    }
+    <div id="ccsMachineData" hidden data-keys="@machineKeysJson" data-machines="@machinesJson"></div>
     <script src="~/js/photo-keying.js"></script>
     <script>
         window.ccsKeyWhiteBackground('.ct-photo img, .chiller-photo img');
@@ -182,8 +196,7 @@
             }
 
             if (exportBtn) {
-                var ALL_MACHINE_KEYS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                    Model.SelectMany(z => new[] { z.Ct }.Concat(z.Chillers)).Select(m => m.Key)));
+                var ALL_MACHINE_KEYS = JSON.parse(document.getElementById('ccsMachineData').dataset.keys);
 
                 exportBtn.addEventListener('click', function () {
                     if (!fromInput.value || !toInput.value) {
@@ -205,19 +218,7 @@
                 return;
             }
 
-            var MACHINES = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                Model.SelectMany(z => new[] { z.Ct }.Concat(z.Chillers))
-                    .Select(m => new
-                    {
-                        key = m.Key,
-                        parameters = m.Parameters.Select(p => new
-                        {
-                            parameterKey = p.ParameterKey,
-                            kind = p.Kind,
-                            unit = p.Unit,
-                            linkedParameterKey = p.LinkedParameterKey
-                        })
-                    })));
+            var MACHINES = JSON.parse(document.getElementById('ccsMachineData').dataset.machines);
 
             var MACHINE_KEYS = MACHINES.map(function (m) { return m.key; });
 

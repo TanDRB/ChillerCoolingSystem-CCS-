@@ -1,0 +1,80 @@
+    @using System.Globalization
+@using ChillerCoolingSystem_CCS_.Monitoring
+@model List<ChillerCoolingSystem_CCS_.Models.Dto.DashboardZoneDto>
+@inject IExtruderMonitoringService Monitoring
+@{
+    var requestedKey = Context.Request.RouteValues["id"]?.ToString() ?? Context.Request.Query["id"].ToString();
+    var plantKey = ViewData["CurrentPlantKey"] as string;
+    var extruder = (string.IsNullOrWhiteSpace(requestedKey) ? null : Monitoring.FindExtruder(requestedKey))
+                   ?? Monitoring.GetExtruders().FirstOrDefault(e => e.PlantKey == plantKey)
+                   ?? Monitoring.GetExtruders().FirstOrDefault();
+    string Num(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+}
+
+@if (extruder is null)
+{
+    <div class="ext-card ext-empty">Chưa cấu hình máy Extruder nào (mục "Monitoring:Extruders" trong appsettings.json).</div>
+}
+else
+{
+    <div id="extruderPage" data-key="@extruder.Key">
+
+        <div id="extConn" class="ext-conn d-none" role="alert"></div>
+
+        <section class="ext-card ext-top">
+            <div class="ext-name">
+                <div class="ext-label">@extruder.Name @extruder.Number</div>
+                <div class="ext-model">
+                    <span>@extruder.Model</span>
+                </div>
+            </div>
+
+            <div class="ext-state" id="extState" data-state="Unknown">
+                <div class="ext-state-label">TRẠNG THÁI</div>
+                <div class="ext-state-value"><span class="state-dot"></span><span id="extStateText">ĐANG KẾT NỐI…</span></div>
+            </div>
+
+            <div class="ext-start" id="extStart" data-state="Unknown" role="status" aria-live="polite">
+                <svg class="ico-play" viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z" /></svg>
+                <svg class="ico-stop" viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2" /></svg>
+                <span id="extStartText">--</span>
+            </div>
+        </section>
+
+        <section class="ext-card ext-table-wrap">
+            <table class="ext-table" aria-label="Bảng nhiệt độ @extruder.DisplayName">
+                <thead>
+                    <tr>
+                        <th class="c-stt">STT</th>
+                        <th>NỘI DUNG</th>
+                        <th>TIÊU CHUẨN<br />(°C)</th>
+                        <th>THỰC TẾ<br />(°C)</th>
+                        <th>CHÊNH LỆCH<br />(°C)</th>
+                        <th>KẾT QUẢ</th>
+                        <th>TRẠNG THÁI</th>
+                    </tr>
+                </thead>
+                <tbody id="extRows">
+                    @for (var i = 0; i < extruder.Points.Count; i++)
+                    {
+                        var p = extruder.Points[i];
+                        <tr data-index="@i" data-result="NoData">
+                            <td class="c-stt">@(i + 1)</td>
+                            <td class="c-name">@p.Name</td>
+                            <td class="c-std">@Num(p.Standard) ± @Num(p.Tolerance)</td>
+                            <td class="c-actual">--</td>
+                            <td class="c-dev">--</td>
+                            <td class="c-result"><span class="result-text">--</span></td>
+                            <td class="c-status"><span class="status-dot"></span><span class="status-text">Chưa có dữ liệu</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="ext-foot">
+                <span class="live-pill" id="extLive" data-live="false"><span class="live-dot"></span><span id="extLiveText">Đang kết nối</span></span>
+                <span class="ext-muted">Cập nhật lúc <strong id="extReadAt">--:--:--</strong></span>
+            </div>
+        </section>
+    </div>
+}

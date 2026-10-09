@@ -5,5 +5,6 @@ namespace ChillerCoolingSystem_CCS_.Repositories
     public interface IMachineRepository
     {
         Task<List<Machine>> GetAllWithParametersAsync();
+        Task<List<Machine>> GetAllWithParametersAsync(int plantId);
     }
 }

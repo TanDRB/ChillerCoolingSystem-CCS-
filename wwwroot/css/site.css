@@ -18,12 +18,20 @@ body {
     padding: 0;
     overflow: hidden;
     background: #eef2f8;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Times New Roman', Times, serif;
     color: #16274d;
 }
 
 * {
     box-sizing: border-box;
+}
+
+/* Nút/ô nhập/select mặc định không kế thừa font của body */
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
 }
 
 a {

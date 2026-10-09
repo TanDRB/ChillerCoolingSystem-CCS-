@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ChillerCoolingSystem_CCS_.Data;
 using ChillerCoolingSystem_CCS_.Hubs;
+using ChillerCoolingSystem_CCS_.Monitoring;
 using ChillerCoolingSystem_CCS_.Repositories;
 using ChillerCoolingSystem_CCS_.Services;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,24 @@ builder.Services.AddHostedService<HistoryLoggingWorker>();
 builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
 builder.Services.AddScoped<IMachineRepository, MachineRepository>();
 builder.Services.AddScoped<IMachineService, MachineService>();
+builder.Services.AddScoped<IPlantRepository, PlantRepository>();
 builder.Services.AddScoped<IExportService, ExportService>();
+
+builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection(MonitoringOptions.SectionName));
+builder.Services.Configure<PlcConnectionOptions>(builder.Configuration.GetSection(PlcConnectionOptions.SectionName));
+var plcOptions = builder.Configuration.GetSection(PlcConnectionOptions.SectionName).Get<PlcConnectionOptions>() ?? new PlcConnectionOptions();
+if (plcOptions.UseOpcUa)
+{
+    builder.Services.AddSingleton<IPlcDataReader, OpcUaPlcDataReader>();
+}
+else
+{
+    builder.Services.AddSingleton<IPlcDataReader, SimulatedPlcDataReader>();
+}
+builder.Services.AddSingleton<IExtruderMonitoringService, ExtruderMonitoringService>();
+builder.Services.AddSingleton<WeighingService>();
+builder.Services.AddSingleton<IWeighingService>(sp => sp.GetRequiredService<WeighingService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<WeighingService>());
 
 var app = builder.Build();
 

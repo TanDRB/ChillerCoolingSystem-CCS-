@@ -1,0 +1,159 @@
+﻿.ext-card {
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(20, 40, 80, .06);
+}
+
+.ext-empty { padding: 28px; text-align: center; color: #6b7480; font-size: 16px; }
+
+.ext-conn {
+  margin-bottom: clamp(6px, 1.2vh, 12px);
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #fde8e8;
+  border: 1px solid #f5b5b5;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ext-conn.d-none { display: none; }
+
+.ext-muted { font-size: 13px; color: #6b7480; }
+
+.ext-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(14px, 2vw, 26px);
+  padding: clamp(10px, 2.4vh, 22px) clamp(16px, 2vw, 28px);
+  margin-bottom: clamp(8px, 1.8vh, 18px);
+}
+
+.ext-name { padding-right: clamp(14px, 2vw, 26px); border-right: 1px solid #dfe5ee; }
+.ext-label { font-size: clamp(15px, 2.2vh, 22px); font-weight: 700; color: #14284b; letter-spacing: .02em; }
+.ext-model { display: flex; gap: clamp(12px, 1.6vw, 22px); font-size: clamp(30px, 6.4vh, 56px); font-weight: 800; line-height: 1.05; color: #14284b; }
+
+.ext-state {
+  padding: clamp(8px, 1.8vh, 16px) clamp(14px, 1.6vw, 22px);
+  border-radius: 12px;
+  background: #eef0f4;
+  transition: background .2s;
+}
+.ext-state-label { font-size: clamp(12px, 1.6vh, 15px); color: #3d4a5e; margin-bottom: 6px; }
+.ext-state-value { display: flex; align-items: center; gap: 14px; font-size: clamp(18px, 3.4vh, 30px); font-weight: 800; color: #6b7480; }
+.state-dot { width: clamp(16px, 2.8vh, 26px); height: clamp(16px, 2.8vh, 26px); border-radius: 50%; background: #9aa3b1; flex: none; }
+.ext-state[data-state="Running"] { background: #e9f8ec; }
+.ext-state[data-state="Running"] .ext-state-value { color: #17943a; }
+.ext-state[data-state="Running"] .state-dot { background: #20b341; box-shadow: 0 0 0 5px rgba(32, 179, 65, .18); }
+.ext-state[data-state="Stopped"] { background: #fdeeee; }
+.ext-state[data-state="Stopped"] .ext-state-value { color: #d02a2a; }
+.ext-state[data-state="Stopped"] .state-dot { background: #e03a3a; }
+
+.ext-start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-width: clamp(160px, 18vw, 270px);
+  padding: clamp(10px, 2.2vh, 20px) clamp(18px, 2.4vw, 34px);
+  border-radius: 12px;
+  font-size: clamp(20px, 3.6vh, 34px);
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #fff;
+  background: #9aa3b1;
+  user-select: none;
+}
+.ext-start svg { flex: none; display: none; }
+.ext-start[data-state="Running"] { background: linear-gradient(180deg, #25b647, #159a35); box-shadow: 0 4px 12px rgba(21, 154, 53, .35); }
+.ext-start[data-state="Running"] .ico-play { display: block; }
+.ext-start[data-state="Stopped"] { background: linear-gradient(180deg, #e84545, #c92a2a); box-shadow: 0 4px 12px rgba(201, 42, 42, .3); }
+.ext-start[data-state="Stopped"] .ico-stop { display: block; }
+
+.ext-table-wrap { padding: clamp(8px, 1.6vh, 16px); }
+.ext-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: clamp(16px, 5.4vh, 84px); }
+.ext-table th {
+  background: #e5edf8;
+  color: #14284b;
+  font-size: clamp(12px, 2.6vh, 38px);
+  font-weight: 700;
+  text-align: center;
+  padding: clamp(6px, 1.4vh, 26px) 10px;
+  border: 1px solid #fff;
+  line-height: 1.3;
+}
+.ext-table th:first-child { border-top-left-radius: 10px; }
+.ext-table th:last-child { border-top-right-radius: 10px; }
+.ext-table td {
+  text-align: center;
+  padding: clamp(4px, 1vh, 16px) 10px;
+  border-bottom: 1px solid #e6ebf2;
+  border-right: 1px solid #eef1f6;
+  color: #17264a;
+  font-variant-numeric: tabular-nums;
+}
+.ext-table td:last-child { border-right: 0; }
+.ext-table .c-stt { width: 7%; }
+.ext-table .c-name { font-weight: 700; }
+.ext-table .c-std { font-weight: 600; }
+.ext-table .c-actual { font-size: 1.25em; font-weight: 800; }
+.ext-table .c-dev { font-weight: 700; }
+.ext-table .c-result { font-weight: 800; font-size: 1.1em; }
+.ext-table .c-status { text-align: center; font-size: clamp(13px, 3.6vh, 54px); font-weight: 600; white-space: nowrap; }
+
+.status-dot {
+  display: inline-block;
+  width: clamp(12px, 3vh, 46px);
+  height: clamp(12px, 3vh, 46px);
+  border-radius: 50%;
+  background: #aab2bf;
+  margin-right: clamp(8px, 1vw, 14px);
+  vertical-align: middle;
+}
+/* Khối chữ rộng cố định, căn trái: chấm thẳng một hàng, chữ thẳng một hàng; cả khối nằm giữa ô (td căn giữa). */
+.status-text { display: inline-block; min-width: 7em; text-align: left; vertical-align: middle; }
+
+.ext-table tr[data-result="Ok"] .c-result { background: #e9f8ec; color: #17943a; }
+.ext-table tr[data-result="Ok"] .status-dot { background: #20b341; }
+.ext-table tr[data-result="Ng"] .c-result { background: #fde8e8; color: #e02424; }
+.ext-table tr[data-result="Ng"] .c-actual,
+.ext-table tr[data-result="Ng"] .c-dev { color: #e02424; font-weight: 800; }
+.ext-table tr[data-result="Ng"] .status-dot { background: #e61e1e; }
+.ext-table tr[data-result="NoData"] .c-result,
+.ext-table tr[data-result="NoData"] .c-actual,
+.ext-table tr[data-result="NoData"] .c-dev { color: #9aa3b1; }
+
+.ext-foot { display: flex; align-items: center; justify-content: space-between; padding: clamp(6px, 1.2vh, 14px) 8px 2px; }
+.live-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #8a93a2; }
+.live-dot { width: 10px; height: 10px; border-radius: 50%; background: #c1c8d3; }
+.live-pill[data-live="true"] { color: #17943a; }
+.live-pill[data-live="true"] .live-dot { background: #20b341; animation: livePulse 1.6s ease-in-out infinite; }
+.live-pill[data-live="false"] { color: #d02a2a; }
+.live-pill[data-live="false"] .live-dot { background: #e03a3a; }
+@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+@media (max-width: 900px) {
+  .ext-top { grid-template-columns: 1fr 1fr; }
+  .ext-name { grid-column: 1 / -1; border-right: 0; padding-right: 0; }
+  .ext-start { min-width: 0; }
+  .ext-table td, .ext-table th { padding-left: 4px; padding-right: 4px; }
+}
+
+/* Lấp đầy chiều cao còn lại của màn hình: khối bảng giãn ra, các hàng chia đều */
+#extruderPage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#extruderPage .ext-top { flex: none; }
+#extruderPage .ext-table-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#extruderPage .ext-table { flex: 1; height: 100%; }
+#extruderPage .ext-foot { flex: none; }
+
+/* Màn hình cao (1080p trở lên): chữ/số lớn hơn cho dễ đọc từ xa */
+@media (min-height: 900px) {
+  .ext-top { padding: clamp(18px, 3vh, 44px) clamp(16px, 2vw, 40px); }
+  .ext-label { font-size: clamp(15px, 2.6vh, 36px); }
+  .ext-model { font-size: clamp(30px, 7.4vh, 104px); }
+  .ext-state-label { font-size: clamp(12px, 1.9vh, 26px); }
+  .ext-state-value { font-size: clamp(18px, 4vh, 56px); }
+  .state-dot { width: clamp(16px, 3.2vh, 44px); height: clamp(16px, 3.2vh, 44px); }
+  .ext-start { font-size: clamp(20px, 4.2vh, 58px); }
+}

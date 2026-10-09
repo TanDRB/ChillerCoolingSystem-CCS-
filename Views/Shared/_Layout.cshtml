@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/extruder.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/weight.css" asp-append-version="true" />
 
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
 
@@ -134,6 +136,10 @@
             </div>
         </div>
     </div>
+
+    @* Mỗi script chỉ chạy khi trang có phần tử gốc của nó (#extruderPage / #weightPage), các trang khác bỏ qua. *@
+    <script src="~/js/extruder.js" asp-append-version="true"></script>
+    <script src="~/js/weight.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -1076,3 +1076,92 @@
         font-size: 10px;
     }
 }
+
+/*
+ * Màn hình desktop Full HD (kể cả Windows scale 125% => vùng hiển thị chỉ ~1530x680..788 CSS px).
+ * Các khối media phía trên ép chữ xuống 8-11px dù còn nhiều chỗ trống. Ở khoảng 1280-1700px rộng:
+ *  - nhãn sát trái, giá trị căn phải (không dành cột nhãn cố định => đỡ phí chỗ, chữ lớn hơn nhiều);
+ *  - MỘT cỡ chữ chung cho mọi thẻ Chiller (tính theo thẻ 3 cột là thẻ hẹp nhất) và một cỡ chung cho
+ *    Cooling Tower; cỡ chữ lấy theo bề rộng khung chứa (cqw) và chiều cao màn hình (vh), lấy giá trị
+ *    nhỏ hơn nên không bị cắt/tràn. Hệ số: "Bình thường" rộng ~6,06em, nhãn dài nhất ~8-9,8em.
+ * Phải để cuối file để thắng các khối phía trên.
+ */
+@media (min-width: 1280px) and (max-width: 1700px) {
+    .plant-zones,
+    .ct-params {
+        container-type: inline-size;
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-row,
+    .zone-chillers-3 .chiller-params .param-row,
+    .ct-params .param-row {
+        gap: 4px 5px;
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-text,
+    .zone-chillers-3 .chiller-params .param-text,
+    .ct-params .param-text {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-value,
+    .zone-chillers-3 .chiller-params .param-value,
+    .ct-params .param-value {
+        margin-left: auto;
+        padding-left: 6px;
+    }
+
+    /* Cooling Tower: mỗi cột = (bề rộng khung - 14px) / 2; trừ ~50px icon + khoảng cách */
+    .ct-params .param-icon {
+        width: clamp(22px, 3.4vh, 30px);
+        height: clamp(22px, 3.4vh, 30px);
+    }
+
+    .ct-params .param-value {
+        font-size: clamp(13px, min(3vh, calc((50cqw - 57px) / 10.7)), 22px);
+    }
+
+    .ct-params .param-label {
+        font-size: clamp(11px, min(2.6vh, calc((50cqw - 57px) / 12.6)), 18px);
+    }
+
+    .ct-desc {
+        font-size: clamp(12px, 2vh, 15px);
+    }
+
+    /* Chiller: cùng một cỡ cho thẻ 2 cột và 3 cột (thẻ 3 cột rộng ~15% bề rộng hàng) */
+    .chiller-params .param-icon.sm {
+        width: clamp(20px, 3.2vh, 26px);
+        height: clamp(20px, 3.2vh, 26px);
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-value,
+    .zone-chillers-3 .chiller-params .param-value {
+        font-size: clamp(11px, min(2.9vh, calc((15cqw - 50px) / 10.8)), 21px);
+    }
+
+    .zone-chillers:not(.zone-chillers-3) .chiller-params .param-label,
+    .zone-chillers-3 .chiller-params .param-label {
+        font-size: clamp(10px, min(2.5vh, calc((15cqw - 50px) / 12.8)), 18px);
+    }
+
+    .chiller-sub {
+        font-size: clamp(11px, 1.9vh, 13px);
+    }
+
+    /* Tận dụng chỗ trống phía dưới thẻ Chiller cho ảnh máy (trước đó chỉ ~54px ở 680px cao) */
+    .chiller-photo {
+        height: clamp(40px, calc(24vh - 80px), 170px);
+    }
+
+    /* Thanh thống kê dưới cùng */
+    .stat-value {
+        font-size: clamp(20px, 3.8vh, 30px);
+    }
+
+    .stat-label {
+        font-size: clamp(10px, 1.7vh, 12px);
+    }
+}
+

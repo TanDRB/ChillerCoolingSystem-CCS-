@@ -19,9 +19,9 @@ namespace ChillerCoolingSystem_CCS_.Services
             return machines.Select(ToDto).ToList();
         }
 
-        public async Task<List<DashboardZoneDto>> GetDashboardZonesAsync()
+        public async Task<List<DashboardZoneDto>> GetDashboardZonesAsync(int plantId)
         {
-            var machines = await _machineRepository.GetAllWithParametersAsync();
+            var machines = await _machineRepository.GetAllWithParametersAsync(plantId);
 
             var coolingTowers = machines.Where(m => m.ZoneKey == null).OrderBy(m => m.SortOrder);
             var chillersByZone = machines
