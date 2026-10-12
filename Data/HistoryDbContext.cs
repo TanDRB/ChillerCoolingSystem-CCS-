@@ -20,26 +20,20 @@ namespace ChillerCoolingSystem_CCS_.Data
         {
             modelBuilder.Entity<TagHistoryEntry>()
                 .HasIndex(e => new { e.MachineKey, e.TimestampUtc });
-
             modelBuilder.Entity<AlarmEvent>()
                 .HasIndex(e => new { e.MachineKey, e.StartUtc });
-
             modelBuilder.Entity<Machine>()
                 .HasIndex(m => m.Key)
                 .IsUnique();
-
             modelBuilder.Entity<MachineParameter>()
                 .HasOne(p => p.Machine)
                 .WithMany(m => m.Parameters)
                 .HasForeignKey(p => p.MachineId);
-
             modelBuilder.Entity<Plant>()
                 .HasIndex(p => p.Key)
                 .IsUnique();
-
             modelBuilder.Entity<WeighingRecord>()
                 .HasIndex(w => new { w.StationKey, w.RecordedAtUtc });
-
             modelBuilder.Entity<Machine>()
                 .HasOne(m => m.Plant)
                 .WithMany()

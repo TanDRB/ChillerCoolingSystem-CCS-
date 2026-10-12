@@ -1,15 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
-
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
+#pragma warning disable CA1814
 namespace ChillerCoolingSystem_CCS_.Migrations
 {
-    /// <inheritdoc />
     public partial class AddMachineCatalog : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -31,7 +27,6 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                 {
                     table.PrimaryKey("PK_Machines", x => x.Id);
                 });
-
             migrationBuilder.CreateTable(
                 name: "MachineParameters",
                 columns: table => new
@@ -57,7 +52,6 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
             migrationBuilder.InsertData(
                 table: "Machines",
                 columns: new[] { "Id", "ImageUrl", "Key", "Location", "Name", "OpcDevice", "SortOrder", "Type", "ZoneKey" },
@@ -71,7 +65,6 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                     { 6, "/image/Chiller.png", "cl9", "Banbury #3", "Chiller #9", "CT-CL.BANBURY.CL9", 6, "Chiller", "ct7" },
                     { 7, "/image/Chiller.png", "cl10", "Banbury #3", "Chiller #10", "CT-CL.BANBURY.CL10", 7, "Chiller", "ct7" }
                 });
-
             migrationBuilder.InsertData(
                 table: "MachineParameters",
                 columns: new[] { "Id", "IconKey", "Kind", "LabelKey", "LinkedParameterKey", "MachineId", "ParameterKey", "SortOrder", "Unit" },
@@ -107,12 +100,10 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                     { 28, "run-stop", "Status", "runStop", null, 7, "RunStop", 2, null },
                     { 29, "fault", "Fault", "fault", null, 7, "Fault", 3, null }
                 });
-
             migrationBuilder.CreateIndex(
                 name: "IX_MachineParameters_MachineId",
                 table: "MachineParameters",
                 column: "MachineId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_Machines_Key",
                 table: "Machines",
@@ -120,12 +111,10 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                 unique: true);
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
                 name: "MachineParameters");
-
             migrationBuilder.DropTable(
                 name: "Machines");
         }

@@ -30,14 +30,10 @@ namespace ChillerCoolingSystem_CCS_.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var intervalSeconds = _config.GetValue("HistoryLogging:IntervalSeconds", 300);
-
             await using (var db = await _dbFactory.CreateDbContextAsync(stoppingToken))
             {
-                await db.Database.MigrateAsync(stoppingToken);
-                await MachineCatalogSeeder.SeedAsync(db, stoppingToken);
                 await LoadOpenAlarmsAsync(db, stoppingToken);
             }
-
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -53,7 +49,6 @@ namespace ChillerCoolingSystem_CCS_.Services
                 {
                     _logger.LogError(ex, "HistoryLoggingWorker: lỗi vòng lặp ghi log");
                 }
-
                 await Task.Delay(TimeSpan.FromSeconds(intervalSeconds), stoppingToken);
             }
         }
@@ -64,7 +59,6 @@ namespace ChillerCoolingSystem_CCS_.Services
                 .Where(a => a.EndUtc == null)
                 .Select(a => a.MachineKey)
                 .ToListAsync(ct);
-
             foreach (var machineKey in openAlarms)
             {
                 _lastFaultState[machineKey] = true;
@@ -81,11 +75,9 @@ namespace ChillerCoolingSystem_CCS_.Services
             {
                 return;
             }
-
             var now = DateTime.UtcNow;
             var entries = new List<TagHistoryEntry>();
             var faultByMachine = new Dictionary<string, (bool Good, string? Value)>();
-
             foreach (var (key, tag) in snapshot)
             {
                 var match = TagKeyRegex().Match(key);
@@ -96,10 +88,8 @@ namespace ChillerCoolingSystem_CCS_.Services
                         key);
                     continue;
                 }
-
                 var machineKey = match.Groups["machine"].Value;
                 var tagName = match.Groups["tag"].Value;
-
                 entries.Add(new TagHistoryEntry
                 {
                     MachineKey = machineKey,
@@ -108,18 +98,14 @@ namespace ChillerCoolingSystem_CCS_.Services
                     Good = tag.Good,
                     TimestampUtc = now
                 });
-
                 if (tagName == "Fault")
                 {
                     faultByMachine[machineKey] = (tag.Good, tag.Value);
                 }
             }
-
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
-
             db.TagHistoryEntries.AddRange(entries);
             await ProcessFaultTransitionsAsync(db, faultByMachine, now, ct);
-
             await db.SaveChangesAsync(ct);
         }
 
@@ -135,10 +121,8 @@ namespace ChillerCoolingSystem_CCS_.Services
                 {
                     continue;
                 }
-
                 var isFault = fault.Value != "0";
                 var wasFault = _lastFaultState.GetValueOrDefault(machineKey);
-
                 if (isFault && !wasFault)
                 {
                     db.AlarmEvents.Add(new AlarmEvent { MachineKey = machineKey, StartUtc = now });
@@ -150,12 +134,10 @@ namespace ChillerCoolingSystem_CCS_.Services
                         .Where(a => a.MachineKey == machineKey && a.EndUtc == null)
                         .OrderByDescending(a => a.StartUtc)
                         .FirstOrDefaultAsync(ct);
-
                     if (openAlarm != null)
                     {
                         openAlarm.EndUtc = now;
                     }
-
                     _lastFaultState[machineKey] = false;
                 }
             }
@@ -168,21 +150,16 @@ namespace ChillerCoolingSystem_CCS_.Services
             {
                 return;
             }
-
             _lastCleanupUtc = now;
             var retentionDays = _config.GetValue("HistoryLogging:RetentionDays", 90);
             var cutoff = now.AddDays(-retentionDays);
-
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
-
             var deletedEntries = await db.TagHistoryEntries
                 .Where(e => e.TimestampUtc < cutoff)
                 .ExecuteDeleteAsync(ct);
-
             var deletedAlarms = await db.AlarmEvents
                 .Where(a => a.EndUtc != null && a.EndUtc < cutoff)
                 .ExecuteDeleteAsync(ct);
-
             if (deletedEntries > 0 || deletedAlarms > 0)
             {
                 _logger.LogInformation(

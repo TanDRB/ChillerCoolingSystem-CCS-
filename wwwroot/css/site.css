@@ -26,7 +26,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Nút/ô nhập/select mặc định không kế thừa font của body */
 button,
 input,
 select,

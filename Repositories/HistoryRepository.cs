@@ -17,7 +17,6 @@ namespace ChillerCoolingSystem_CCS_.Repositories
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var keys = machineKeys.ToList();
-
             return await db.TagHistoryEntries
                 .Where(e => keys.Contains(e.MachineKey) && e.Good && e.TimestampUtc >= fromUtc && e.TimestampUtc <= toUtc)
                 .OrderBy(e => e.TimestampUtc)
@@ -28,8 +27,6 @@ namespace ChillerCoolingSystem_CCS_.Repositories
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var keys = machineKeys.ToList();
-
-            // Lấy alarm còn đang mở HOẶC có phần giao với khoảng [fromUtc, toUtc].
             return await db.AlarmEvents
                 .Where(a => keys.Contains(a.MachineKey) && a.StartUtc <= toUtc && (a.EndUtc == null || a.EndUtc >= fromUtc))
                 .OrderBy(a => a.StartUtc)

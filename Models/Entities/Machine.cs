@@ -10,7 +10,6 @@ namespace ChillerCoolingSystem_CCS_.Models.Entities
         public string Type { get; set; } = "";
         public string Location { get; set; } = "";
 
-        // Null cho Cooling Tower; Chiller trỏ về Key của Cooling Tower phục vụ nó.
         public string? ZoneKey { get; set; }
 
         public string OpcDevice { get; set; } = "";

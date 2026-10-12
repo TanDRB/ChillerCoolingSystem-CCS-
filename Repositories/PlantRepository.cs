@@ -16,7 +16,6 @@ namespace ChillerCoolingSystem_CCS_.Repositories
         public async Task<List<Plant>> GetActiveAsync()
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
-
             return await db.Plants
                 .Where(p => p.IsActive)
                 .OrderBy(p => p.SortOrder)

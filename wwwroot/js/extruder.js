@@ -1,14 +1,6 @@
-// Trang giám sát Extruder: hỏi dữ liệu mới mỗi giây (polling) và cập nhật bảng.
 (function () {
-    'use strict';
-
     var root = document.getElementById('extruderPage');
     if (!root) return;
-
-    var key = root.getAttribute('data-key');
-    var POLL_MS = 1000;
-    var TIMEOUT_MS = 4000;
-
     var rows = document.querySelectorAll('#extRows tr');
     var conn = document.getElementById('extConn');
     var state = document.getElementById('extState');
@@ -18,20 +10,13 @@
     var live = document.getElementById('extLive');
     var liveText = document.getElementById('extLiveText');
     var readAt = document.getElementById('extReadAt');
-
     var STATE_TEXT = { Running: 'ĐANG HOẠT ĐỘNG', Stopped: 'ĐÃ DỪNG', Unknown: 'KHÔNG CÓ TÍN HIỆU' };
     var START_TEXT = { Running: 'START', Stopped: 'STOP', Unknown: '--' };
     var STATUS_TEXT = { Ok: 'Bình thường', Ng: 'Vượt ngưỡng', NoData: 'Chưa có dữ liệu' };
-
-    function fmt(v) {
-        if (v === null || v === undefined) return '--';
-        return Number.isInteger(v) ? String(v) : v.toFixed(1);
-    }
-
-    function fmtDev(v) {
-        if (v === null || v === undefined) return '--';
-        var s = fmt(v);
-        return v > 0 ? '+' + s : s;
+    var RESULT_TEXT = { Ok: 'OK', Ng: 'NG', NoData: '--' };
+    function formatDeviation(value) {
+        var text = window.ccsFormatNumber(value);
+        return value > 0 ? '+' + text : text;
     }
 
     function setLive(ok, text) {
@@ -39,25 +24,28 @@
         liveText.textContent = text;
     }
 
-    function render(data) {
-        var runState = data.runState || 'Unknown';
+    function setRunState(runState) {
         state.setAttribute('data-state', runState);
         start.setAttribute('data-state', runState);
-        stateText.textContent = STATE_TEXT[runState] || STATE_TEXT.Unknown;
-        startText.textContent = START_TEXT[runState] || '--';
+        stateText.textContent = STATE_TEXT[runState];
+        startText.textContent = START_TEXT[runState];
+    }
 
-        (data.points || []).forEach(function (p, i) {
-            var tr = rows[i];
-            if (!tr) return;
-            tr.setAttribute('data-result', p.result);
-            tr.querySelector('.c-actual').textContent = fmt(p.actual);
-            tr.querySelector('.c-dev').textContent = fmtDev(p.deviation);
-            tr.querySelector('.result-text').textContent = p.result === 'Ok' ? 'OK' : p.result === 'Ng' ? 'NG' : '--';
-            tr.querySelector('.status-text').textContent = STATUS_TEXT[p.result] || STATUS_TEXT.NoData;
+    function setRow(tr, result, actual, deviation) {
+        tr.setAttribute('data-result', result);
+        tr.querySelector('.c-actual').textContent = window.ccsFormatNumber(actual);
+        tr.querySelector('.c-dev').textContent = formatDeviation(deviation);
+        tr.querySelector('.result-text').textContent = RESULT_TEXT[result];
+        tr.querySelector('.status-text').textContent = STATUS_TEXT[result];
+    }
+
+    function render(data) {
+        setRunState(data.runState || 'Unknown');
+        (data.points || []).forEach(function (point, i) {
+            if (rows[i]) setRow(rows[i], point.result, point.actual, point.deviation);
         });
 
         readAt.textContent = data.readAt || '--:--:--';
-
         if (data.connectionOk) {
             conn.classList.add('d-none');
             setLive(true, 'Trực tiếp');
@@ -72,42 +60,9 @@
         conn.textContent = message;
         conn.classList.remove('d-none');
         setLive(false, 'Mất kết nối máy chủ');
-        state.setAttribute('data-state', 'Unknown');
-        start.setAttribute('data-state', 'Unknown');
-        stateText.textContent = STATE_TEXT.Unknown;
-        startText.textContent = START_TEXT.Unknown;
-        rows.forEach(function (tr) {
-            tr.setAttribute('data-result', 'NoData');
-            tr.querySelector('.c-actual').textContent = '--';
-            tr.querySelector('.c-dev').textContent = '--';
-            tr.querySelector('.result-text').textContent = '--';
-            tr.querySelector('.status-text').textContent = STATUS_TEXT.NoData;
-        });
+        setRunState('Unknown');
+        rows.forEach(function (tr) { setRow(tr, 'NoData', null, null); });
     }
 
-    var busy = false;
-
-    async function poll() {
-        if (busy || document.hidden) return; // không chồng yêu cầu, không tải khi tab bị ẩn
-        busy = true;
-        var controller = new AbortController();
-        var timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
-        try {
-            var res = await fetch('/Extruder/' + encodeURIComponent(key) + '/Data', {
-                cache: 'no-store',
-                signal: controller.signal
-            });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            render(await res.json());
-        } catch (err) {
-            showServerError('Không nhận được dữ liệu từ máy chủ web (' + (err && err.name === 'AbortError' ? 'quá thời gian chờ' : err.message) + ').');
-        } finally {
-            clearTimeout(timer);
-            busy = false;
-        }
-    }
-
-    poll();
-    setInterval(poll, POLL_MS);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
+    window.ccsPoll('/Extruder/' + encodeURIComponent(root.getAttribute('data-key')) + '/Data', render, showServerError);
 })();

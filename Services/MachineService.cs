@@ -22,13 +22,11 @@ namespace ChillerCoolingSystem_CCS_.Services
         public async Task<List<DashboardZoneDto>> GetDashboardZonesAsync(int plantId)
         {
             var machines = await _machineRepository.GetAllWithParametersAsync(plantId);
-
             var coolingTowers = machines.Where(m => m.ZoneKey == null).OrderBy(m => m.SortOrder);
             var chillersByZone = machines
                 .Where(m => m.ZoneKey != null)
                 .GroupBy(m => m.ZoneKey)
                 .ToDictionary(g => g.Key!, g => g.OrderBy(m => m.SortOrder).ToList());
-
             return coolingTowers.Select(ct => new DashboardZoneDto
             {
                 Ct = ToDto(ct),

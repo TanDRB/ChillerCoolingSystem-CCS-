@@ -1,13 +1,10 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
-
 namespace ChillerCoolingSystem_CCS_.Migrations
 {
-    /// <inheritdoc />
     public partial class AddExtruderPlant : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(
@@ -16,7 +13,6 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                 "VALUES ('extruder', N'Extruder #1 IN', N'EXTRUDER TEMPERATURE MONITORING', 'Extruder', 2, 1)");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("DELETE FROM Plants WHERE [Key] = 'extruder'");

@@ -54,7 +54,6 @@
     border-right: 1px solid #e1e8f2;
 }
 
-/* Gợi ý vào lại toàn màn hình sau khi chuyển trang */
 .fs-restore-hint {
     position: fixed;
     top: 88px;
@@ -71,7 +70,6 @@
     box-shadow: 0 6px 18px rgba(22, 39, 77, .25);
 }
 
-/* Dropdown chọn xưởng */
 .topbar { z-index: 30; }
 
 .plant-dd {
@@ -238,7 +236,6 @@
 .app-content {
     flex: 1;
     min-height: 0;
-    
     overflow: hidden;
     padding: clamp(8px, 1.6vh, 18px) clamp(10px, 1.2vw, 20px);
     display: flex;

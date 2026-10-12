@@ -1,5 +1,3 @@
-/* Trang cân Extruder (N1/N2/N3 + chiều dài). Dùng chung thẻ/nút từ extruder.css. */
-
 #weightPage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 #weightPage .ext-top { flex: none; }
 
@@ -31,7 +29,6 @@
   border-bottom: 1px solid #d9e3f2;
   color: #17264a;
 }
-/* Ô ở cột cuối / hàng cuối không cần viền (đã có viền ngoài) */
 .wt-unit { border-right: 0; }
 .wt-grid > .wt-cell:nth-last-child(-n+3) { border-bottom: 0; }
 
@@ -76,3 +73,6 @@
 @media (max-width: 700px) {
   .wt-grid { grid-template-columns: 26% 16% 36% 22%; }
 }
+
+.wt-title { grid-area: 1 / 1 / 4 / 2; }
+.wt-len-title { grid-area: 4 / 1 / 5 / 3; }

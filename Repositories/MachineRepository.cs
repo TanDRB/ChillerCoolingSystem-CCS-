@@ -13,26 +13,17 @@ namespace ChillerCoolingSystem_CCS_.Repositories
             _dbFactory = dbFactory;
         }
 
-        public async Task<List<Machine>> GetAllWithParametersAsync()
+        public async Task<List<Machine>> GetAllWithParametersAsync(int? plantId = null)
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
-
-            return await db.Machines
+            var query = db.Machines.AsNoTracking();
+            if (plantId.HasValue)
+            {
+                query = query.Where(m => m.PlantId == plantId.Value);
+            }
+            return await query
                 .Include(m => m.Parameters.OrderBy(p => p.SortOrder))
                 .OrderBy(m => m.SortOrder)
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
-        public async Task<List<Machine>> GetAllWithParametersAsync(int plantId)
-        {
-            await using var db = await _dbFactory.CreateDbContextAsync();
-
-            return await db.Machines
-                .Where(m => m.PlantId == plantId)
-                .Include(m => m.Parameters.OrderBy(p => p.SortOrder))
-                .OrderBy(m => m.SortOrder)
-                .AsNoTracking()
                 .ToListAsync();
         }
     }

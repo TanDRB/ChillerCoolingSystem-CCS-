@@ -2,13 +2,10 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
-
 namespace ChillerCoolingSystem_CCS_.Migrations
 {
-    /// <inheritdoc />
     public partial class InitialHistory : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -25,7 +22,6 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                 {
                     table.PrimaryKey("PK_AlarmEvents", x => x.Id);
                 });
-
             migrationBuilder.CreateTable(
                 name: "TagHistoryEntries",
                 columns: table => new
@@ -42,24 +38,20 @@ namespace ChillerCoolingSystem_CCS_.Migrations
                 {
                     table.PrimaryKey("PK_TagHistoryEntries", x => x.Id);
                 });
-
             migrationBuilder.CreateIndex(
                 name: "IX_AlarmEvents_MachineKey_StartUtc",
                 table: "AlarmEvents",
                 columns: new[] { "MachineKey", "StartUtc" });
-
             migrationBuilder.CreateIndex(
                 name: "IX_TagHistoryEntries_MachineKey_TimestampUtc",
                 table: "TagHistoryEntries",
                 columns: new[] { "MachineKey", "TimestampUtc" });
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
                 name: "AlarmEvents");
-
             migrationBuilder.DropTable(
                 name: "TagHistoryEntries");
         }

@@ -5,14 +5,12 @@
         canvas.height = img.naturalHeight;
         var ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
-
         var frame;
         try {
             frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
         } catch (e) {
             return;
         }
-
         var px = frame.data;
         for (var i = 0; i < px.length; i += 4) {
             var lum = (px[i] + px[i + 1] + px[i + 2]) / 3;

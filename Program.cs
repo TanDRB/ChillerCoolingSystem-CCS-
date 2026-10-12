@@ -7,28 +7,20 @@ using ChillerCoolingSystem_CCS_.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services.AddControllersWithViews();
-
 builder.Services.AddSignalR().AddJsonProtocol(options =>
 {
     options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
-builder.Services.AddSingleton<MachineLatestValuesStore>();
-builder.Services.AddHostedService<KepwareSmokeTestWorker>();
-
 builder.Services.AddDbContextFactory<HistoryDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("HistoryDb"),
         sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
-builder.Services.AddHostedService<HistoryLoggingWorker>();
-
 builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
 builder.Services.AddScoped<IMachineRepository, MachineRepository>();
-builder.Services.AddScoped<IMachineService, MachineService>();
 builder.Services.AddScoped<IPlantRepository, PlantRepository>();
+builder.Services.AddScoped<IMachineService, MachineService>();
 builder.Services.AddScoped<IExportService, ExportService>();
-
 builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection(MonitoringOptions.SectionName));
 builder.Services.Configure<PlcConnectionOptions>(builder.Configuration.GetSection(PlcConnectionOptions.SectionName));
 var plcOptions = builder.Configuration.GetSection(PlcConnectionOptions.SectionName).Get<PlcConnectionOptions>() ?? new PlcConnectionOptions();
@@ -40,30 +32,24 @@ else
 {
     builder.Services.AddSingleton<IPlcDataReader, SimulatedPlcDataReader>();
 }
+builder.Services.AddSingleton<MachineLatestValuesStore>();
 builder.Services.AddSingleton<IExtruderMonitoringService, ExtruderMonitoringService>();
 builder.Services.AddSingleton<WeighingService>();
 builder.Services.AddSingleton<IWeighingService>(sp => sp.GetRequiredService<WeighingService>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<WeighingService>());
-
+builder.Services.AddHostedService<RealtimeTagWorker>();
+builder.Services.AddHostedService<HistoryLoggingWorker>();
 var app = builder.Build();
-
+await DatabaseInitializer.InitializeAsync(app.Services);
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
+app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapHub<ChillerRealtimeHub>("/hubs/chiller-realtime");
-
 app.Run();

@@ -1,0 +1,12 @@
+@using ChillerCoolingSystem_CCS_.Models.Dto
+@model ParamRowVm
+@{
+    var key = Model.Parameter.ParameterKey;
+    var valueId = $"{Model.MachineKey}-{char.ToLowerInvariant(key[0])}{key[1..]}";
+    var isToggle = Model.Parameter.Kind is "Status" or "Fault";
+}
+<div class="param-row">
+    @await Html.PartialAsync("_ParamIcon", new ParamIconVm { IconKey = Model.Parameter.IconKey, Id = isToggle ? $"{valueId}-icon" : null, Compact = Model.Compact })
+    <div class="param-text"><div class="param-label" data-i18n="@Model.Parameter.LabelKey"></div></div>
+    <div class="param-value @(isToggle ? "green" : "")" id="@valueId">--</div>
+</div>

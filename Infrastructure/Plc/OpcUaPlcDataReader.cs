@@ -1,7 +1,6 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
-using ChillerCoolingSystem_CCS_.Monitoring;
-using Microsoft.Extensions.Logging;
+using System.Globalization;
 using Microsoft.Extensions.Options;
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -11,29 +10,20 @@ using StatusCodes = Opc.Ua.StatusCodes;
 
 namespace ChillerCoolingSystem_CCS_.Monitoring
 {
-    /// <summary>
-    /// Đọc tag từ OPC UA server của Kepware. Tag Kepware có dạng "Channel.Device.Tag" (ví dụ
-    /// "MHE PLC LS.LSE.EXTRUDER#1.CYL#1") và được truy cập bằng NodeId dạng chuỗi trong namespace
-    /// cấu hình (<see cref="OpcUaOptions.NamespaceIndex"/>, thường là 2).
-    ///
-    /// Giữ MỘT phiên (session) dùng chung; khi lỗi thì huỷ phiên và tự tạo lại ở lần đọc kế tiếp.
-    /// </summary>
+    // Dùng subscription (như OPC Quick Client) thay vì đọc đồng bộ: tag của thiết bị chậm
+    // (vd. MHE TOUCH mất ~9 giây mỗi lần đọc) không còn chặn các tag khác.
     public sealed class OpcUaPlcDataReader : IPlcDataReader, IAsyncDisposable
     {
-        // Thư viện OPC UA bản mới yêu cầu truyền ITelemetryContext (ghi log/đo đạc nội bộ của thư viện); dùng bản mặc định.
         private static readonly ITelemetryContext Telemetry = DefaultTelemetry.Create(_ => { });
-
         private readonly OpcUaOptions _options;
         private readonly ILogger<OpcUaPlcDataReader> _logger;
         private readonly SemaphoreSlim _gate = new(1, 1);
-        private ApplicationConfiguration? _configuration;
-        private ISession? _session;
-
-        // Chế độ subscription: Kepware tự quét tag rồi đẩy giá trị mới về, ReadAsync chỉ lấy từ bộ nhớ nên tag
-        // chậm/lỗi (vd. tag của "MHE TOUCH" mỗi lần đọc đồng bộ mất ~9 giây) không chặn các tag khác.
-        private Subscription? _subscription;
         private readonly Dictionary<string, MonitoredItem> _items = new();
         private readonly ConcurrentDictionary<string, PlcTagValue> _latest = new();
+        private readonly HashSet<string> _noValueTags = new();
+        private ApplicationConfiguration? _configuration;
+        private ISession? _session;
+        private Subscription? _subscription;
         private volatile bool _sessionFaulted;
         private string? _lastFailureMessage;
         private DateTime _lastFailureAt;
@@ -47,68 +37,50 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
         public async Task<IReadOnlyDictionary<string, PlcTagValue>> ReadAsync(
             IReadOnlyCollection<string> tagIds, CancellationToken cancellationToken = default)
         {
-            var result = new Dictionary<string, PlcTagValue>();
             if (tagIds.Count == 0)
             {
-                return result;
+                return new Dictionary<string, PlcTagValue>();
             }
-
             await _gate.WaitAsync(cancellationToken);
             try
             {
-                // Vừa thất bại gần đây: trả lỗi ngay thay vì lại chờ kết nối (tránh trang bị treo mỗi giây).
                 if (_session is not { Connected: true }
                     && _lastFailureMessage is not null
                     && DateTime.UtcNow - _lastFailureAt < TimeSpan.FromMilliseconds(_options.RetryCooldownMs))
                 {
                     throw new PlcConnectionException(_lastFailureMessage);
                 }
-
                 var session = await EnsureSessionAsync(cancellationToken);
-                var ids = tagIds.ToList();
-
-                if (_options.UseSubscription)
+                if (_sessionFaulted)
                 {
-                    var subscribed = await ReadSubscribedAsync(session, ids, cancellationToken);
-                    _lastFailureMessage = null;
-                    return subscribed;
+                    throw new InvalidOperationException("mất liên lạc với Kepware (keep-alive thất bại)");
                 }
-
-                var nodes = new ReadValueIdCollection();
-                foreach (var tag in ids)
+                var ids = tagIds.Distinct().ToList();
+                using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                 {
-                    nodes.Add(new ReadValueId
-                    {
-                        NodeId = new NodeId(tag, (ushort)_options.NamespaceIndex),
-                        AttributeId = Attributes.Value
-                    });
+                    timeout.CancelAfter(_options.OperationTimeoutMs);
+                    await EnsureSubscribedAsync(session, ids, timeout.Token);
                 }
-
-                using var readTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                readTimeout.CancelAfter(_options.OperationTimeoutMs);
-                var response = await session.ReadAsync(null, 0, TimestampsToReturn.Source, nodes, readTimeout.Token);
-
-                for (var i = 0; i < ids.Count; i++)
-                {
-                    result[ids[i]] = ToTagValue(ids[i], response.Results[i]);
-                }
-
+                await WaitForFirstValuesAsync(ids, cancellationToken);
                 _lastFailureMessage = null;
-                return result;
+                return ids.ToDictionary(
+                    tag => tag,
+                    tag => _latest.TryGetValue(tag, out var value)
+                        ? value
+                        : new PlcTagValue(tag, null, false, null, "Chưa nhận được giá trị từ Kepware"));
             }
             catch (PlcConnectionException)
             {
-                throw; // lỗi đang trong thời gian nghỉ giữa các lần thử lại
+                throw;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                throw; // người dùng huỷ yêu cầu — không phải lỗi kết nối
+                throw;
             }
             catch (Exception ex)
             {
                 await DropSessionAsync();
                 var reason = ex is OperationCanceledException ? "quá thời gian chờ" : ex.Message;
-                if (ex is TimeoutException) reason = ex.Message;
                 _lastFailureMessage = $"Không đọc được dữ liệu từ Kepware ({_options.EndpointUrl}): {reason}";
                 _lastFailureAt = DateTime.UtcNow;
                 _logger.LogWarning(ex, "Lỗi đọc OPC UA");
@@ -126,10 +98,12 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
             {
                 return new PlcTagValue(tag, null, false, null, data.StatusCode.ToString());
             }
-
             try
             {
-                var number = Convert.ToDouble(data.Value, System.Globalization.CultureInfo.InvariantCulture);
+                // float32 -> chuỗi ngắn nhất để 1.9f không thành 1.899999976...
+                var number = data.Value is float single
+                    ? double.Parse(single.ToString("R", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture)
+                    : Convert.ToDouble(data.Value, CultureInfo.InvariantCulture);
                 var good = StatusCode.IsGood(data.StatusCode);
                 var timestamp = data.SourceTimestamp == DateTime.MinValue ? (DateTime?)null : data.SourceTimestamp.ToLocalTime();
                 return new PlcTagValue(tag, number, good, timestamp, good ? null : data.StatusCode.ToString());
@@ -140,96 +114,13 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
             }
         }
 
-        private async Task<ISession> EnsureSessionAsync(CancellationToken cancellationToken)
+        private async Task EnsureSubscribedAsync(ISession session, List<string> ids, CancellationToken cancellationToken)
         {
-            if (_session is { Connected: true })
-            {
-                return _session;
-            }
-
-            await DropSessionAsync();
-
-            // Giới hạn CỨNG thời gian kết nối: thư viện OPC UA không phải lúc nào cũng tôn trọng việc huỷ
-            // (khi server tắt có thể mất nhiều giây để từ bỏ), nên nếu quá hạn thì ngừng chờ và bỏ mặc
-            // lần kết nối đó — nếu nó hoàn tất muộn thì phiên được đóng lại, không để rò rỉ.
-            var connectTask = ConnectAsync(cancellationToken);
-            var timeout = Task.Delay(_options.ConnectTimeoutMs, cancellationToken);
-            if (await Task.WhenAny(connectTask, timeout) != connectTask)
-            {
-                _ = connectTask.ContinueWith(
-                    async t =>
-                    {
-                        if (t.IsCompletedSuccessfully)
-                        {
-                            try { await t.Result.CloseAsync(); } catch { /* bỏ qua */ }
-                            t.Result.Dispose();
-                        }
-                        else
-                        {
-                            _ = t.Exception; // đã quan sát lỗi, tránh cảnh báo task không được xử lý
-                        }
-                    },
-                    TaskScheduler.Default);
-                throw new TimeoutException($"quá {_options.ConnectTimeoutMs} ms chưa kết nối được");
-            }
-
-            _session = await connectTask;
-            _sessionFaulted = false;
-            _session.KeepAlive += OnKeepAlive;
-            _logger.LogInformation("Đã kết nối OPC UA tới {Endpoint}", _options.EndpointUrl);
-            return _session;
-        }
-
-        private void OnKeepAlive(ISession session, KeepAliveEventArgs e)
-        {
-            // Mất liên lạc với server: đánh dấu để lần đọc kế tiếp bỏ phiên và kết nối lại (subscription không tự báo lỗi).
-            if (ServiceResult.IsBad(e.Status))
-            {
-                _sessionFaulted = true;
-            }
-        }
-
-        /// <summary>
-        /// Chế độ subscription: đảm bảo mọi tag được yêu cầu đã có MonitoredItem, đợi tối đa
-        /// <see cref="OpcUaOptions.FirstValueWaitMs"/> cho giá trị đầu tiên của tag mới rồi trả giá trị mới nhất trong bộ nhớ.
-        /// </summary>
-        private async Task<IReadOnlyDictionary<string, PlcTagValue>> ReadSubscribedAsync(
-            ISession session, IReadOnlyList<string> ids, CancellationToken cancellationToken)
-        {
-            if (_sessionFaulted)
-            {
-                throw new InvalidOperationException("mất liên lạc với Kepware (keep-alive thất bại)");
-            }
-
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeout.CancelAfter(_options.OperationTimeoutMs);
-            await EnsureSubscribedAsync(session, ids, timeout.Token);
-
-            var wait = Stopwatch.StartNew();
-            while (wait.ElapsedMilliseconds < _options.FirstValueWaitMs && ids.Any(t => !_latest.ContainsKey(t)))
-            {
-                await Task.Delay(50, cancellationToken);
-            }
-
-            var result = new Dictionary<string, PlcTagValue>();
-            foreach (var tag in ids)
-            {
-                result[tag] = _latest.TryGetValue(tag, out var value)
-                    ? value
-                    : new PlcTagValue(tag, null, false, null, "Chưa nhận được giá trị từ Kepware");
-            }
-
-            return result;
-        }
-
-        private async Task EnsureSubscribedAsync(ISession session, IReadOnlyList<string> ids, CancellationToken cancellationToken)
-        {
-            var missing = ids.Where(t => !_items.ContainsKey(t)).Distinct().ToList();
+            var missing = ids.Where(tag => !_items.ContainsKey(tag)).ToList();
             if (_subscription is not null && missing.Count == 0)
             {
                 return;
             }
-
             if (_subscription is null)
             {
                 _subscription = new Subscription(session.DefaultSubscription)
@@ -244,7 +135,6 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
                 session.AddSubscription(_subscription);
                 await _subscription.CreateAsync(cancellationToken);
             }
-
             var created = new List<MonitoredItem>();
             foreach (var tag in missing)
             {
@@ -262,27 +152,36 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
                 _items[tag] = item;
                 created.Add(item);
             }
-
             if (created.Count == 0)
             {
                 return;
             }
-
             _subscription.AddItems(created);
             await _subscription.ApplyChangesAsync(cancellationToken);
-
-            // Tag không tồn tại / bị từ chối: ghi nhận ngay là không tốt thay vì đợi giá trị không bao giờ tới.
             foreach (var item in created)
             {
-                if (item.Handle is not string tag)
-                {
-                    continue;
-                }
-
-                if (item.Status?.Error is { } error && ServiceResult.IsBad(error))
+                if (item.Handle is string tag && item.Status?.Error is { } error && ServiceResult.IsBad(error))
                 {
                     _latest[tag] = new PlcTagValue(tag, null, false, null, error.StatusCode.ToString());
                 }
+            }
+        }
+
+        private async Task WaitForFirstValuesAsync(List<string> ids, CancellationToken cancellationToken)
+        {
+            var waiting = ids.Where(tag => !_latest.ContainsKey(tag) && !_noValueTags.Contains(tag)).ToList();
+            if (waiting.Count == 0)
+            {
+                return;
+            }
+            var wait = Stopwatch.StartNew();
+            while (wait.ElapsedMilliseconds < _options.FirstValueWaitMs && waiting.Any(tag => !_latest.ContainsKey(tag)))
+            {
+                await Task.Delay(50, cancellationToken);
+            }
+            foreach (var tag in waiting.Where(tag => !_latest.ContainsKey(tag)))
+            {
+                _noValueTags.Add(tag);
             }
         }
 
@@ -292,27 +191,62 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
             {
                 return;
             }
-
             foreach (var value in item.DequeueValues())
             {
                 _latest[tag] = ToTagValue(tag, value);
             }
         }
 
+        private void OnKeepAlive(ISession session, KeepAliveEventArgs e)
+        {
+            if (ServiceResult.IsBad(e.Status))
+            {
+                _sessionFaulted = true;
+            }
+        }
+
+        private async Task<ISession> EnsureSessionAsync(CancellationToken cancellationToken)
+        {
+            if (_session is { Connected: true })
+            {
+                return _session;
+            }
+            await DropSessionAsync();
+            var connectTask = ConnectAsync(cancellationToken);
+            var timeout = Task.Delay(_options.ConnectTimeoutMs, cancellationToken);
+            if (await Task.WhenAny(connectTask, timeout) != connectTask)
+            {
+                _ = connectTask.ContinueWith(
+                    async task =>
+                    {
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            try { await task.Result.CloseAsync(); } catch { }
+                            task.Result.Dispose();
+                        }
+                        else
+                        {
+                            _ = task.Exception;
+                        }
+                    },
+                    TaskScheduler.Default);
+                throw new TimeoutException($"quá {_options.ConnectTimeoutMs} ms chưa kết nối được");
+            }
+            _session = await connectTask;
+            _session.KeepAlive += OnKeepAlive;
+            _logger.LogInformation("Đã kết nối OPC UA tới {Endpoint}", _options.EndpointUrl);
+            return _session;
+        }
+
         private async Task<ISession> ConnectAsync(CancellationToken cancellationToken)
         {
             var configuration = _configuration ??= await CreateConfigurationAsync();
-            var useSecurity = _options.UseSecurity;
-
             var endpoint = await CoreClientUtils.SelectEndpointAsync(
-                configuration, _options.EndpointUrl, useSecurity, _options.OperationTimeoutMs, Telemetry, cancellationToken);
-            var endpointConfiguration = EndpointConfiguration.Create(configuration);
-            var configuredEndpoint = new ConfiguredEndpoint(null, endpoint, endpointConfiguration);
-
+                configuration, _options.EndpointUrl, _options.UseSecurity, _options.OperationTimeoutMs, Telemetry, cancellationToken);
+            var configuredEndpoint = new ConfiguredEndpoint(null, endpoint, EndpointConfiguration.Create(configuration));
             IUserIdentity identity = string.IsNullOrWhiteSpace(_options.Username)
                 ? new UserIdentity(new AnonymousIdentityToken())
                 : new UserIdentity(_options.Username, System.Text.Encoding.UTF8.GetBytes(_options.Password ?? string.Empty));
-
             return await new DefaultSessionFactory(Telemetry).CreateAsync(
                 configuration,
                 configuredEndpoint,
@@ -340,21 +274,9 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
                         StorePath = Path.Combine(pki, "own"),
                         SubjectName = $"CN={_options.ApplicationName}, O=DRB Vietnam"
                     },
-                    TrustedPeerCertificates = new CertificateTrustList
-                    {
-                        StoreType = "Directory",
-                        StorePath = Path.Combine(pki, "trusted")
-                    },
-                    TrustedIssuerCertificates = new CertificateTrustList
-                    {
-                        StoreType = "Directory",
-                        StorePath = Path.Combine(pki, "issuer")
-                    },
-                    RejectedCertificateStore = new CertificateTrustList
-                    {
-                        StoreType = "Directory",
-                        StorePath = Path.Combine(pki, "rejected")
-                    },
+                    TrustedPeerCertificates = new CertificateTrustList { StoreType = "Directory", StorePath = Path.Combine(pki, "trusted") },
+                    TrustedIssuerCertificates = new CertificateTrustList { StoreType = "Directory", StorePath = Path.Combine(pki, "issuer") },
+                    RejectedCertificateStore = new CertificateTrustList { StoreType = "Directory", StorePath = Path.Combine(pki, "rejected") },
                     AutoAcceptUntrustedCertificates = _options.AutoAcceptUntrustedCertificates,
                     AddAppCertToTrustedStore = true
                 },
@@ -362,9 +284,7 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
                 ClientConfiguration = new ClientConfiguration { DefaultSessionTimeout = _options.SessionTimeoutMs },
                 TransportConfigurations = new TransportConfigurationCollection()
             };
-
             await configuration.ValidateAsync(ApplicationType.Client);
-
             if (_options.AutoAcceptUntrustedCertificates)
             {
                 configuration.CertificateValidator.CertificateValidation += (_, e) =>
@@ -375,14 +295,16 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
                     }
                 };
             }
-
-            // Chỉ khi dùng bảo mật mới cần chứng chỉ ứng dụng; chế độ None (mặc định) bỏ qua.
             if (_options.UseSecurity)
             {
-                var application = new ApplicationInstance(Telemetry) { ApplicationName = _options.ApplicationName, ApplicationType = ApplicationType.Client, ApplicationConfiguration = configuration };
+                var application = new ApplicationInstance(Telemetry)
+                {
+                    ApplicationName = _options.ApplicationName,
+                    ApplicationType = ApplicationType.Client,
+                    ApplicationConfiguration = configuration
+                };
                 await application.CheckApplicationInstanceCertificatesAsync(false, 0);
             }
-
             return configuration;
         }
 
@@ -390,18 +312,15 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
         {
             var session = _session;
             _session = null;
-
-            // Giá trị cũ của phiên đã bỏ không được trả lại như thể còn mới; phiên mới sẽ đăng ký lại từ đầu.
             _subscription = null;
             _items.Clear();
             _latest.Clear();
+            _noValueTags.Clear();
             _sessionFaulted = false;
-
             if (session is null)
             {
                 return;
             }
-
             session.KeepAlive -= OnKeepAlive;
             try
             {
@@ -409,7 +328,6 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
             }
             catch
             {
-                // phiên đã hỏng thì bỏ qua
             }
             finally
             {
@@ -424,4 +342,3 @@ namespace ChillerCoolingSystem_CCS_.Monitoring
         }
     }
 }
-

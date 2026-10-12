@@ -111,7 +111,6 @@
   margin-right: clamp(8px, 1vw, 14px);
   vertical-align: middle;
 }
-/* Khối chữ rộng cố định, căn trái: chấm thẳng một hàng, chữ thẳng một hàng; cả khối nằm giữa ô (td căn giữa). */
 .status-text { display: inline-block; min-width: 7em; text-align: left; vertical-align: middle; }
 
 .ext-table tr[data-result="Ok"] .c-result { background: #e9f8ec; color: #17943a; }
@@ -140,14 +139,12 @@
   .ext-table td, .ext-table th { padding-left: 4px; padding-right: 4px; }
 }
 
-/* Lấp đầy chiều cao còn lại của màn hình: khối bảng giãn ra, các hàng chia đều */
 #extruderPage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 #extruderPage .ext-top { flex: none; }
 #extruderPage .ext-table-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 #extruderPage .ext-table { flex: 1; height: 100%; }
 #extruderPage .ext-foot { flex: none; }
 
-/* Màn hình cao (1080p trở lên): chữ/số lớn hơn cho dễ đọc từ xa */
 @media (min-height: 900px) {
   .ext-top { padding: clamp(18px, 3vh, 44px) clamp(16px, 2vw, 40px); }
   .ext-label { font-size: clamp(15px, 2.6vh, 36px); }
